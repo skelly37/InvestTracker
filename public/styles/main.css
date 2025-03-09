@@ -6,6 +6,11 @@
     --primary-color: blue;
 }
 
+p {
+    margin: 0;
+    padding: 1em;
+}
+
 .flex-column-center-center {
     display: flex;
     flex-direction: column;
