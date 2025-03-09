@@ -12,13 +12,19 @@
 
     <title>LOGIN</title>
 </head>
-<body id="login-page">
+<body id="login-page" class="flex-row-center-center">
     
-    <div>
+    <div class="flex-column-center-center">
         <h1>LOGIN</h1>
-        <form>
-            <input type="email" placeholder="email">
-            <input type="password" placeholder="password">
+        <form class="login-form flex-column-center-center">
+            <div class="email">
+                <input type="email" placeholder="email">
+                <i class="fa-solid fa-at flex-column-center-center"></i>
+            </div>
+            <div class="password">
+                <input type="password" placeholder="password">
+                <i class="fa-solid fa-key flex-column-center-center"></i>
+            </div>
             <button type="submit"><i class="fa-solid fa-right-to-bracket"></i> SIGN IN</button>
         </form>
 

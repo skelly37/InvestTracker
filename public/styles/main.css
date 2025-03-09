@@ -1,15 +1,26 @@
-
 * {
     font-family: "Montserrat", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
     font-size: 14px;
+    --primary-color: blue;
 }
 
-#login-page {
+.flex-column-center-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-row-center-center {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+
+#login-page {
     height: 100vh;
 }
 
@@ -19,36 +30,22 @@ body {
     font-size: 18px;
 }
 
-button {
-    background-color: blue; 
-    color: rgba(255, 255, 255, 0.766);
-}
-
 #login-page > div {
-    border: 1px solid blue;
+    border: 1px solid var(--primary-color);
     padding: 3em;
     border-radius: 1em;
     background-color: white;
     width: 30%;
-    height: calc(0.2* 100vh);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     box-shadow: rgb(0 0 0 / 34%) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
-    flex-direction: column;
 }
 
 #login-page > div > form {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
     gap: 1em;
     width: 100%;
     padding: 1em;
 }
 
-#login-page > div > form > input {
+input {
     width: 100%;
     height: 1.5em;
     border-radius: 1em;
@@ -61,9 +58,8 @@ button {
     box-sizing: border-box;
 }
 
-
-#login-page > div > form > button {
-    background-color: blue;
+button {
+    background-color: var(--primary-color);
     color: white;
     width: 100%;
     height: 2.5em;
@@ -78,6 +74,32 @@ button {
     cursor: pointer;
 }
 
+.email, .password {
+    width: 100%;
+}
+
+.email > i, .password > i {
+    height: 2.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    width: 2.5em;
+    border-radius: 1em 0 0 1em;
+}
+
+.login-form > div > input {
+    padding-left: calc(1em + 2.5em);
+}
+
+.login-form > div {
+    position: relative;
+}
+
+.login-form > div > i {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
 
 @media print {
     #login-page > div {
@@ -85,7 +107,7 @@ button {
     }
 }
 
-@media (max--device-width: 600px) {
+@media (max-width: 600px) {
     #login-page > div {
         width: 100%;
   }
