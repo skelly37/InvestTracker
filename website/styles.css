@@ -1,0 +1,256 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #FAF0E6;
+    color: #4A4A4A;
+}
+
+.container, .dashboard-container {
+    background-color: #FAF0E6;
+    color: #4A4A4A;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 300px;
+    margin: 100px auto;
+    text-align: center;
+}
+
+h1, .dashboard-column h2 {
+    margin-bottom: 40px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.form-box, .settings-form form {
+    display: flex;
+    flex-direction: column;
+    background-color: #FAF0E6;
+    padding: 0;
+    border: none;
+    gap: 20px;
+}
+
+label, .settings-form label {
+    text-align: left;
+    font-size: 14px;
+}
+
+input, select, .search-bar input, table input[readonly], table select {
+    padding: 8px;
+    background-color: #FFF8DC;
+    border: 1px solid #4A4A4A;
+    color: #4A4A4A;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+input {
+    margin-bottom: 20px;
+}
+
+button, .nav-buttons button, .category-tabs button, .stock-tabs button, .apply-button, .danger, .nav-button {
+    background-color: #FFF8DC;
+    border: 1px solid #4A4A4A;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.button-group, .danger-zone {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.button-full button {
+    width: 100%;
+}
+
+.dashboard-header, .stock-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #FFF8DC;
+    border: 1px solid #4A4A4A;
+    padding: 5px;
+}
+
+.dashboard-columns {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px;
+}
+
+.dashboard-column {
+    width: 32%;
+    background-color: #FFF8DC;
+    border: 1px solid #4A4A4A;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dashboard-column:not(:last-child) {
+    border-right: 1px solid #4A4A4A;
+}
+
+.divider {
+    width: 100%;
+    height: 2px;
+    background-color: #4A4A4A;
+    margin-bottom: 15px;
+}
+
+.stock-entry {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.stock-name, .symbol-name {
+    font-weight: bold;
+}
+
+.stock-price, .stock-change, .price {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.plus {
+    color: limegreen;
+}
+
+.minus {
+    color: red;
+}
+
+.neutral {
+    color: #4A4A4A;
+}
+
+.stock-tabs, .category-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.search-results-table, .search-results {
+    padding: 20px;
+}
+
+.search-results-table table, table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #FFF8DC;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #4A4A4A;
+    text-align: left;
+}
+
+th {
+    background-color: #FAF0E6;
+    font-weight: bold;
+}
+
+.nav-section {
+    text-align: center;
+    background-color: #FAF0E6;
+    padding: 20px;
+}
+
+.section-divider td {
+    border-top: 2px solid #4A4A4A;
+    background-color: #FAF0E6;
+    height: 10px;
+}
+
+.trash-button, .round {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+}
+
+.round {
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+}
+
+.round.red {
+    background-color: red;
+    color: white;
+    margin-right: 4px;
+}
+
+.round.green {
+    background-color: limegreen;
+    color: white;
+}
+
+.reset-button, .danger {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+}
+
+.apply-button {
+    background-color: limegreen;
+    color: white;
+}
+
+.nav-buttons .active {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.chart-controls select {
+    background-color: #FFF8DC;
+    border: 1px solid #4A4A4A;
+    padding: 6px 10px;
+    font-size: 14px;
+}
+
+.stock-analysis-columns {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px 40px;
+}
+
+.analysis-column {
+    width: 32%;
+    background-color: #FFF8DC;
+    padding: 15px;
+    border: 1px solid #4A4A4A;
+}
+
+.analysis-column h3 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.analysis-column p {
+    margin: 6px 0;
+}
+
+.metrics-table, .stock-chart-section {
+    padding: 20px;
+}
