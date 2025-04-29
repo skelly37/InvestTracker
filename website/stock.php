@@ -5,6 +5,8 @@
     <title>InvestTracker - Stock Detail</title>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="chart.js" defer></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -41,7 +43,7 @@
                 </select>
             </div>
             <div class="chart-placeholder">
-                <img src="chart-placeholder.png" alt="Chart Placeholder" style="width: 100%;">
+                <canvas id="priceChart" style="width: 100%; height: 400px;"></canvas>
             </div>
         </section>
 
