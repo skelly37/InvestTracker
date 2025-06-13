@@ -45,12 +45,10 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Please fix the errors below.');
         }
         
-        // Attempt authentication
-        $user = $this->user->authenticate($input['username'], $input['password']);
+        // Attempt authentication using login method
+        $loginResult = $this->user->login($input['username'], $input['password']);
         
-        if ($user) {
-            Session::setUser($user);
-            
+        if ($loginResult) {
             // Clear old input
             $this->clearOldInput();
             
@@ -58,7 +56,7 @@ class AuthController extends BaseController {
             $redirectTo = Session::get('intended_url', '/dashboard');
             Session::remove('intended_url');
             
-            $this->redirect($redirectTo, 'Welcome back, ' . $user['username'] . '!');
+            $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
         } else {
             // Store username for convenience
             Session::set('old_username', $input['username']);
@@ -77,7 +75,7 @@ class AuthController extends BaseController {
         
         $input = $this->sanitizeInput($_POST);
         
-        // Validate input
+        // Validate input (without email for now)
         $validator = Validator::make($input, [
             'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
             'password' => ['required', 'string', ['min', 6], ['max', 255]],
@@ -96,21 +94,16 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Passwords do not match.');
         }
         
-        // Create user
-        $userId = $this->user->create($input['username'], $input['password']);
+        // Create user using register method (with dummy email for now)
+        $result = $this->user->register($input['username'], $input['username'] . '@local.test', $input['password']);
         
-        if ($userId) {
-            // Auto-login the new user
-            $user = $this->user->getById($userId);
-            if ($user) {
-                Session::setUser($user);
-                $this->clearOldInput();
-                $this->redirect('/dashboard', 'Account created successfully! Welcome to InvestTracker!');
-            }
+        if ($result) {
+            $this->clearOldInput();
+            $this->redirect('/login', 'Account created successfully. Please login.');
+        } else {
+            Session::set('old_username', $input['username']);
+            $this->redirect('/login', 'Failed to create account. Username may already exist.');
         }
-        
-        Session::set('old_username', $input['username']);
-        $this->redirect('/login', 'Username already exists or registration failed. Please try again.');
     }
     
     public function logout(): void {
@@ -150,18 +143,14 @@ class AuthController extends BaseController {
             $this->redirect('/settings', 'Passwords do not match.');
         }
         
-        // Verify current password
-        $currentUser = Session::getUser();
-        if (!$this->user->authenticate($currentUser['username'], $input['current_password'])) {
-            Session::set('error_current_password', 'Current password is incorrect.');
-            $this->redirect('/settings', 'Current password is incorrect.');
-        }
+        // Change password using changePassword method
+        $result = $this->user->changePassword($userId, $input['current_password'], $input['new_password']);
         
-        // Change password
-        if ($this->user->changePassword($userId, $input['new_password'])) {
+        if ($result) {
             $this->redirect('/settings', 'Password changed successfully.');
         } else {
-            $this->redirect('/settings', 'Failed to change password. Please try again.');
+            Session::set('error_current_password', 'Current password is incorrect.');
+            $this->redirect('/settings', 'Current password is incorrect.');
         }
     }
     

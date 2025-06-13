@@ -6,12 +6,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Enable mock mode FIRST
-require_once __DIR__ . '/config/mock.php';
-
-// Load mock classes
-require_once __DIR__ . '/classes/MockDatabase.php';
-
 // Load other classes
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/classes/Database.php';

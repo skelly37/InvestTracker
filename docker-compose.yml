@@ -1,27 +1,6 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: investtracker_app
-    restart: unless-stopped
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=invest_tracker
-      - DB_USER=invest_user
-      - DB_PASSWORD=secure_password_2024
-      - APP_ENV=production
-      - TIMEZONE=UTC
-    volumes:
-      - ./website:/var/www/html
-      - ./storage:/var/www/html/storage
-      - ./logs:/var/www/html/logs
-    depends_on:
-      - db
-    networks:
-      - app_network
-
   nginx:
     image: nginx:alpine
     container_name: investtracker_nginx
@@ -49,6 +28,45 @@ services:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     ports:
       - "5432:5432"
+    networks:
+      - app_network
+
+  app:
+    build: .
+    container_name: investtracker_app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=invest_tracker
+      - DB_USER=invest_user
+      - DB_PASSWORD=secure_password_2024
+      - APP_ENV=production
+      - TIMEZONE=UTC
+    volumes:
+      - ./website:/var/www/html
+      - ./storage:/var/www/html/storage
+      - ./logs:/var/www/html/logs
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  yahoo_wrapper:
+    image: python:3.11-slim
+    container_name: investtracker_yahoo_wrapper
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "pip install flask yfinance requests && python -m yahoo_wrapper"
+    volumes:
+      - ./yahoo_wrapper:/app/yahoo_wrapper
+      - ./yahoo_wrapper/__main__.py:/app/yahoo_wrapper/__main__.py
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5000
     networks:
       - app_network
 

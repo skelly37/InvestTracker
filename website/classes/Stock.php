@@ -1,210 +1,256 @@
 <?php
+
 class Stock {
     private $db;
-
+    private $apiUrl;
+    
     public function __construct() {
-        $this->db = MockDatabase::getInstance();
+        $this->db = Database::getInstance();
+        $config = require __DIR__ . '/../config/app.php';
+        $this->apiUrl = $config['yahoo_api_url'];
     }
-
-    public function getRecentlyViewed(int $userId, int $limit = 10): array {
-        // Return mock stocks since we're using mock data
-        return array_slice($this->db->getMockStocks(), 0, $limit);
-    }
-
-    public function getPopularStocks(): array {
-        $stocks = $this->db->getMockStocks();
-        
-        // Add some mock data structure that the dashboard expects
-        foreach ($stocks as &$stock) {
-            if (!isset($stock['data'])) {
-                $stock['data'] = [
-                    'change_percent' => $stock['change_percent'] ?? 0
-                ];
-            }
+    
+    public function getUserFavorites($userId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT symbol, created_at as added_at 
+                FROM user_favorites 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$userId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Get favorites error: " . $e->getMessage());
+            return [];
         }
-        
-        return $stocks;
+    }
+    
+    public function addToFavorites($userId, $symbol) {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_favorites (user_id, symbol, created_at) 
+                VALUES (?, ?, NOW())
+                ON CONFLICT (user_id, symbol) DO NOTHING
+            ");
+            $stmt->execute([$userId, $symbol]);
+            return ['success' => true, 'message' => 'Added to favorites'];
+        } catch (Exception $e) {
+            error_log("Add to favorites error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to add to favorites'];
+        }
+    }
+    
+    public function removeFromFavorites($userId, $symbol) {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM user_favorites WHERE user_id = ? AND symbol = ?");
+            $stmt->execute([$userId, $symbol]);
+            return ['success' => true, 'message' => 'Removed from favorites'];
+        } catch (Exception $e) {
+            error_log("Remove from favorites error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to remove from favorites'];
+        }
+    }
+    
+    public function isFavorite($userId, $symbol) {
+        try {
+            $stmt = $this->db->prepare("SELECT 1 FROM user_favorites WHERE user_id = ? AND symbol = ?");
+            $stmt->execute([$userId, $symbol]);
+            return (bool) $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("Check favorite error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function addToRecentlyViewed($userId, $symbol) {
+        try {
+            // Remove if already exists to update timestamp
+            $stmt = $this->db->prepare("DELETE FROM recently_viewed WHERE user_id = ? AND symbol = ?");
+            $stmt->execute([$userId, $symbol]);
+            
+            // Add with current timestamp
+            $stmt = $this->db->prepare("
+                INSERT INTO recently_viewed (user_id, symbol, viewed_at) 
+                VALUES (?, ?, NOW())
+            ");
+            $stmt->execute([$userId, $symbol]);
+            
+            // Keep only last 50 entries per user - split into two queries for PostgreSQL compatibility
+            $stmt = $this->db->prepare("
+                SELECT id FROM recently_viewed 
+                WHERE user_id = ? 
+                ORDER BY viewed_at DESC 
+                OFFSET 50
+            ");
+            $stmt->execute([$userId]);
+            $idsToDelete = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            
+            if (!empty($idsToDelete)) {
+                $placeholders = str_repeat('?,', count($idsToDelete) - 1) . '?';
+                $stmt = $this->db->prepare("DELETE FROM recently_viewed WHERE id IN ($placeholders)");
+                $stmt->execute($idsToDelete);
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Add to recently viewed error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function getRecentlyViewed($userId, $limit = 10) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT symbol, viewed_at 
+                FROM recently_viewed 
+                WHERE user_id = ? 
+                ORDER BY viewed_at DESC 
+                LIMIT ?
+            ");
+            $stmt->execute([$userId, $limit]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Get recently viewed error: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function searchStocks($query) {
+        try {
+            $url = $this->apiUrl . "/search?q=" . urlencode($query);
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 10,
+                    'method' => 'GET',
+                    'header' => 'User-Agent: InvestTracker/1.0'
+                ]
+            ]);
+            
+            $response = file_get_contents($url, false, $context);
+            if ($response === false) {
+                throw new Exception("Failed to fetch search results");
+            }
+            
+            $data = json_decode($response, true);
+            if (!$data || !isset($data['results'])) {
+                throw new Exception("Invalid search response");
+            }
+            
+            return $data['results'];
+        } catch (Exception $e) {
+            error_log("Search error for '{$query}': " . $e->getMessage());
+            return [];
+        }
     }
 
-    public function getMarketIndices(): array {
-        // Return mock market indices
+    public function getQuote($symbol) {
+        try {
+            $url = $this->apiUrl . "/quote?q=" . urlencode($symbol);
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 10,
+                    'method' => 'GET',
+                    'header' => 'User-Agent: InvestTracker/1.0'
+                ]
+            ]);
+            
+            $response = file_get_contents($url, false, $context);
+            if ($response === false) {
+                throw new Exception("Failed to fetch quote from API");
+            }
+            
+            $data = json_decode($response, true);
+            if (!$data) {
+                throw new Exception("Invalid API response");
+            }
+            
+            return $data;
+        } catch (Exception $e) {
+            error_log("Get quote error for {$symbol}: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    public function getHistoricalData($symbol, $period = '1y') {
+        try {
+            $url = $this->apiUrl . "/historical/" . urlencode($symbol) . "/" . urlencode($period);
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 15,
+                    'method' => 'GET',
+                    'header' => 'User-Agent: InvestTracker/1.0'
+                ]
+            ]);
+            
+            $response = file_get_contents($url, false, $context);
+            if ($response === false) {
+                throw new Exception("Failed to fetch historical data");
+            }
+            
+            $data = json_decode($response, true);
+            if (!$data || isset($data['error'])) {
+                throw new Exception($data['error'] ?? "Invalid historical data response");
+            }
+            
+            return $data;
+        } catch (Exception $e) {
+            error_log("Historical data error for {$symbol}: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    private function getCachedData($symbol) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT data 
+                FROM stock_cache 
+                WHERE symbol = ? AND created_at > NOW() - INTERVAL '5 minutes'
+            ");
+            $stmt->execute([$symbol]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                return json_decode($result['data'], true);
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            error_log("Cache read error: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    private function cacheData($symbol, $data) {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO stock_cache (symbol, data, created_at) 
+                VALUES (?, ?, NOW())
+                ON CONFLICT (symbol) DO UPDATE SET 
+                    data = EXCLUDED.data,
+                    created_at = EXCLUDED.created_at
+            ");
+            $stmt->execute([$symbol, json_encode($data)]);
+        } catch (Exception $e) {
+            error_log("Cache write error: " . $e->getMessage());
+        }
+    }
+    
+    public function getPopularStocks() {
+        // Return some default popular stocks
         return [
-            [
-                'symbol' => 'SPY',
-                'name' => 'SPDR S&P 500 ETF',
-                'price' => 432.50,
-                'change' => 2.15,
-                'change_percent' => 0.50
-            ],
-            [
-                'symbol' => 'QQQ',
-                'name' => 'Invesco QQQ Trust',
-                'price' => 375.80,
-                'change' => -1.25,
-                'change_percent' => -0.33
-            ],
-            [
-                'symbol' => 'DIA',
-                'name' => 'SPDR Dow Jones Industrial Average ETF',
-                'price' => 342.60,
-                'change' => 0.85,
-                'change_percent' => 0.25
-            ]
+            'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 
+            'META', 'NVDA', 'NFLX', 'ORCL', 'AMD'
         ];
     }
-
-    public function getUserFavorites(int $userId): array {
-        return $this->getFavorites($userId);
-    }
-
-    public function search(string $query, int $limit = 20): array {
-        return $this->searchStocks($query, $limit);
-    }
-
-    public function isInFavorites(int $userId, string $symbol): bool {
-        return $this->isFavorite($userId, $symbol);
-    }
-
-    public function getHistoricalData(string $symbol, string $period = '1d'): array {
-        // Convert period to days for mock data
-        $days = match($period) {
-            '1d' => 1,
-            '5d' => 5,
-            '1mo' => 30,
-            '3mo' => 90,
-            '6mo' => 180,
-            '1y' => 365,
-            '2y' => 730,
-            '5y' => 1825,
-            '10y' => 3650,
-            'ytd' => date('z') + 1,
-            'max' => 3650,
-            default => 30
-        };
-        
-        return $this->getStockHistory($symbol, $days);
-    }
-
-    public function getTickerData(string $symbol): ?array {
-        $stocks = $this->db->getMockStocks();
-        foreach ($stocks as $stock) {
-            if ($stock['symbol'] === $symbol) {
-                return $stock;
-            }
-        }
-        return null;
-    }
-
-    public function searchStocks(string $query, int $limit = 20): array {
-        $stocks = $this->db->getMockStocks();
-        $results = [];
-        
-        $query = strtolower($query);
-        
-        foreach ($stocks as $stock) {
-            $symbolMatch = stripos($stock['symbol'], $query) !== false;
-            $nameMatch = stripos($stock['name'], $query) !== false;
-            
-            if ($symbolMatch || $nameMatch) {
-                $results[] = [
-                    'symbol' => $stock['symbol'],
-                    'name' => $stock['name'],
-                    'type' => 'Stock',
-                    'exchange' => 'NASDAQ'
-                ];
-            }
-        }
-        
-        return array_slice($results, 0, $limit);
-    }
-
-    public function addToRecentlyViewed(int $userId, string $symbol): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function getFavorites(int $userId): array {
-        $favorites = $this->db->getMockFavorites();
-        $stocks = $this->db->getMockStocks();
-        $result = [];
-        
-        foreach ($favorites as $favorite) {
-            if ($favorite['user_id'] == $userId) {
-                foreach ($stocks as $stock) {
-                    if ($stock['symbol'] === $favorite['symbol']) {
-                        $result[] = $stock;
-                        break;
-                    }
-                }
-            }
-        }
-        
-        return $result;
-    }
-
-    public function addToFavorites(int $userId, string $symbol): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function removeFromFavorites(int $userId, string $symbol): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function isFavorite(int $userId, string $symbol): bool {
-        $favorites = $this->db->getMockFavorites();
-        
-        foreach ($favorites as $favorite) {
-            if ($favorite['user_id'] == $userId && $favorite['symbol'] === $symbol) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    public function getStocksBySymbols(array $symbols): array {
-        $stocks = $this->db->getMockStocks();
-        $result = [];
-        
-        foreach ($stocks as $stock) {
-            if (in_array($stock['symbol'], $symbols)) {
-                $result[] = $stock;
-            }
-        }
-        
-        return $result;
-    }
-
-    public function getAllStocks(int $limit = 100): array {
-        return array_slice($this->db->getMockStocks(), 0, $limit);
-    }
-
-    public function updateStockData(string $symbol, array $data): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function getStockHistory(string $symbol, int $days = 30): array {
-        // Return mock historical data
-        $basePrice = 100;
-        $history = [];
-        
-        for ($i = $days; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-$i days"));
-            $price = $basePrice + (rand(-500, 500) / 100);
-            
-            $history[] = [
-                'date' => $date,
-                'open' => $price,
-                'high' => $price + (rand(0, 300) / 100),
-                'low' => $price - (rand(0, 300) / 100),
-                'close' => $price + (rand(-200, 200) / 100),
-                'volume' => rand(1000000, 50000000)
-            ];
-        }
-        
-        return $history;
+    
+    public function getMarketIndices() {
+        // Return major market indices
+        return [
+            '^GSPC', // S&P 500
+            '^DJI',  // Dow Jones
+            '^IXIC', // NASDAQ
+            '^RUT'   // Russell 2000
+        ];
     }
 }

@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from flask import Flask, request
 
-from search import *
+from .search import *
 
 
 def demo():
@@ -35,7 +35,7 @@ def server():
         return asdict(quote)
 
     
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=False)
 
 
 server()

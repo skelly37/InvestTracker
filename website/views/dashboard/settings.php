@@ -29,11 +29,11 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                     <div class="metric">
                         <span class="metric__label">Member since:</span>
-                        <span class="metric__value"><?= formatDate($user['created_at']) ?></span>
+                        <span class="metric__value"><?= isset($user['created_at']) && $user['created_at'] ? formatDate($user['created_at']) : 'N/A' ?></span>
                     </div>
                     <div class="metric">
                         <span class="metric__label">Last login:</span>
-                        <span class="metric__value"><?= formatDate($user['last_login']) ?></span>
+                        <span class="metric__value"><?= isset($user['last_login']) && $user['last_login'] ? formatDate($user['last_login']) : 'N/A' ?></span>
                     </div>
                 </div>
                 

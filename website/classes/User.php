@@ -1,116 +1,128 @@
 <?php
 class User {
     private $db;
-
+    
     public function __construct() {
-        $this->db = MockDatabase::getInstance();
+        $this->db = Database::getInstance();
     }
-
-    public function authenticate(string $username, string $password): ?array {
-        $users = $this->db->getMockUsers();
-        
-        foreach ($users as $user) {
-            if ($user['username'] === $username) {
-                if (password_verify($password, $user['password_hash'])) {
-                    return $user;
-                }
-                return null;
-            }
-        }
-        return null;
-    }
-
-    public function login(string $username, string $password): bool {
-        $user = $this->authenticate($username, $password);
-        if ($user) {
-            Session::setUser($user);
-            return true;
-        }
-        return false;
-    }
-
-    public function getAll(): array {
-        return $this->db->getMockUsers();
-    }
-
-    public function toggleActive(int $userId): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function updateRole(int $userId, string $role): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function delete(int $userId): bool {
-        // Mock implementation - always returns true
-        return true;
-    }
-
-    public function create(string $username, string $password, string $role = 'user'): ?int {
-        // Check if user already exists
-        $users = $this->db->getMockUsers();
-        foreach ($users as $user) {
-            if ($user['username'] === $username) {
-                return null;
-            }
-        }
-        
-        // In a real app, this would insert into database
-        $newUserId = count($users) + 1;
-        return $newUserId;
-    }
-
-    public function getById(int $id): ?array {
-        $users = $this->db->getMockUsers();
-        foreach ($users as $user) {
-            if ($user['id'] === $id) {
-                return $user;
-            }
-        }
-        return null;
-    }
-
-    public function register(string $username, string $password): bool {
-        $userId = $this->create($username, $password);
-        if ($userId) {
-            $newUser = [
-                'id' => $userId,
-                'username' => $username,
-                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                'role' => 'user',
-                'is_active' => true,
-                'created_at' => date('Y-m-d H:i:s'),
-                'last_login' => null
-            ];
+    
+    public function login($username, $password) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND (active = true)");
+            $stmt->execute([$username]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            Session::setUser($newUser);
-            return true;
+            if ($user && password_verify($password, $user['password'])) {
+                // Aktualizuj last_login
+                $updateStmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+                $updateStmt->execute([$user['id']]);
+                
+                // Ustaw dane sesji
+                Session::set('user_id', $user['id']);
+                Session::set('username', $user['username']);
+                Session::set('role', $user['role']);
+                Session::set('is_logged_in', true);
+                
+                return true;
+            }
+            
+            return false;
+        } catch (PDOException $e) {
+            error_log("Login error: " . $e->getMessage());
+            return false;
         }
-        return false;
     }
-
-    public function getUserById(int $id): ?array {
-        return $this->getById($id);
+    
+    public function register($username, $email, $password) {
+        try {
+            // Sprawdź czy username już istnieje
+            $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
+            $stmt->execute([$username]);
+            if ($stmt->fetch()) {
+                return false; // Username już istnieje
+            }
+            
+            // Utwórz nowego użytkownika
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $this->db->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())");
+            return $stmt->execute([$username, $email, $hashedPassword]);
+            
+        } catch (PDOException $e) {
+            error_log("Registration error: " . $e->getMessage());
+            return false;
+        }
     }
-
-    public function getAllUsers(): array {
-        return $this->db->getMockUsers();
+    
+    public function changePassword($userId, $currentPassword, $newPassword) {
+        try {
+            // Sprawdź obecne hasło
+            $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user || !password_verify($currentPassword, $user['password'])) {
+                return false;
+            }
+            
+            // Zaktualizuj hasło
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $updateStmt = $this->db->prepare("UPDATE users SET password = ? WHERE id = ?");
+            return $updateStmt->execute([$hashedPassword, $userId]);
+            
+        } catch (PDOException $e) {
+            error_log("Change password error: " . $e->getMessage());
+            return false;
+        }
     }
-
-    public function updateUser(int $id, array $data): bool {
-        // Mock implementation - always returns true
-        return true;
+    
+    public function findById($id) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Get user error: " . $e->getMessage());
+            return false;
+        }
     }
-
-    public function deleteUser(int $id): bool {
-        // Mock implementation - always returns true
-        return true;
+    
+    public function getAllUsers() {
+        try {
+            $stmt = $this->db->query("SELECT * FROM users ORDER BY created_at DESC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Get all users error: " . $e->getMessage());
+            return [];
+        }
     }
-
-    public function changePassword(int $userId, string $newPassword): bool {
-        // Mock implementation - always returns true
-        return true;
+    
+    public function updateRole($userId, $role) {
+        try {
+            $stmt = $this->db->prepare("UPDATE users SET role = ? WHERE id = ?");
+            return $stmt->execute([$role, $userId]);
+        } catch (PDOException $e) {
+            error_log("Update role error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function toggleActive($userId) {
+        try {
+            $stmt = $this->db->prepare("UPDATE users SET is_active = NOT COALESCE(is_active, 1) WHERE id = ?");
+            return $stmt->execute([$userId]);
+        } catch (PDOException $e) {
+            error_log("Toggle active error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function deleteUser($userId) {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+            return $stmt->execute([$userId]);
+        } catch (PDOException $e) {
+            error_log("Delete user error: " . $e->getMessage());
+            return false;
+        }
     }
 }

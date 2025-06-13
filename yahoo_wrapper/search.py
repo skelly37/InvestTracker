@@ -7,7 +7,7 @@ from typing import (
 
 import yfinance as yf
 
-from ticker import *
+from .ticker import *
 
 
 @dataclass(frozen=True)

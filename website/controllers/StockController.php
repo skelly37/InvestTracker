@@ -12,7 +12,7 @@ class StockController extends BaseController {
         
         if (!empty($query)) {
             try {
-                $results = $this->stock->search($query);
+                $results = $this->stock->searchStocks($query);
                 $totalResults = count($results);
             } catch (Exception $e) {
                 error_log("Search error: " . $e->getMessage());
@@ -43,7 +43,7 @@ class StockController extends BaseController {
         
         try {
             // Get stock data
-            $stockData = $this->stock->getTickerData($symbol);
+            $stockData = $this->stock->getQuote($symbol);
             
             if (!$stockData) {
                 $this->redirect('/dashboard', 'Stock not found or data unavailable.');
@@ -53,7 +53,7 @@ class StockController extends BaseController {
             $this->stock->addToRecentlyViewed($userId, $symbol);
             
             // Check if in favorites
-            $isInFavorites = $this->stock->isInFavorites($userId, $symbol);
+            $isInFavorites = $this->stock->isFavorite($userId, $symbol);
             
             // Get historical data for chart
             $period = $_GET['period'] ?? '1d';
@@ -116,7 +116,7 @@ class StockController extends BaseController {
         }
         
         try {
-            $results = $this->stock->search($query);
+            $results = $this->stock->searchStocks($query);
             
             // Format for autocomplete
             $suggestions = array_map(function($item) {
@@ -147,7 +147,7 @@ class StockController extends BaseController {
         }
         
         try {
-            $data = $this->stock->getTickerData($symbol);
+            $data = $this->stock->getQuote($symbol);
             
             if ($data) {
                 $this->json(['success' => true, 'data' => $data]);

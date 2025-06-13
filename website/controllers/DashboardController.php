@@ -128,12 +128,14 @@ class DashboardController extends BaseController {
     public function settings(): void {
         $this->requireAuth();
         
-        $user = Session::getUser();
+        $userId = Session::getUserId();
+        $user = $this->user->findById($userId);
         
         $this->view('dashboard/settings', [
             'title' => 'Settings - InvestTracker',
             'user' => $user,
-            'csrf_token' => $this->generateCSRF()
+            'csrf_token' => $this->generateCSRF(),
+            'flashMessage' => Session::getFlash('message')
         ]);
     }
 }
