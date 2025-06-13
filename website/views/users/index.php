@@ -52,18 +52,18 @@ require_once __DIR__ . '/../layouts/navigation.php';
                                             </select>
                                         </td>
                                         <td>
-                                            <span class="user-status user-status--<?= $user['active'] ? 'active' : 'inactive' ?>">
-                                                <?= $user['active'] ? 'Active' : 'Inactive' ?>
+                                            <span class="user-status user-status--<?= ($user['is_active'] ?? true) ? 'active' : 'inactive' ?>">
+                                                <?= ($user['is_active'] ?? true) ? 'Active' : 'Inactive' ?>
                                             </span>
                                         </td>
-                                        <td><?= formatDate($user['created_at']) ?></td>
-                                        <td><?= formatDate($user['last_login']) ?></td>
+                                        <td><?= date('Y-m-d', strtotime($user['created_at'] ?? 'now')) ?></td>
+                                        <td><?= $user['last_login'] ? date('Y-m-d', strtotime($user['last_login'])) : 'Never' ?></td>
                                         <td>
                                             <div class="user-actions">
                                                 <?php if ($user['id'] != Session::getUserId()): ?>
                                                     <button class="btn btn--small btn--secondary" 
                                                             onclick="toggleUserActive(<?= $user['id'] ?>)">
-                                                        <?= $user['active'] ? 'Deactivate' : 'Activate' ?>
+                                                        <?= ($user['is_active'] ?? true) ? 'Deactivate' : 'Activate' ?>
                                                     </button>
                                                     <button class="btn btn--small btn--danger" 
                                                             onclick="deleteUser(<?= $user['id'] ?>, '<?= htmlspecialchars($user['username']) ?>')">
@@ -144,6 +144,10 @@ require_once __DIR__ . '/../layouts/navigation.php';
     justify-content: center;
 }
 
+.modal.hidden {
+    display: none;
+}
+
 .modal-overlay {
     position: absolute;
     top: 0;
@@ -189,6 +193,28 @@ require_once __DIR__ . '/../layouts/navigation.php';
     border-top: 1px solid #4A4A4A;
     justify-content: flex-end;
 }
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.user-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.user-status--active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.user-status--inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
 </style>
 
 <script>
@@ -218,7 +244,7 @@ function updateUserRole(userId, newRole) {
                 location.reload();
             } else {
                 alert(data.message || 'Failed to update user role');
-                location.reload(); // Reload to reset the select
+                location.reload();
             }
         })
         .catch(error => {
@@ -227,7 +253,7 @@ function updateUserRole(userId, newRole) {
             location.reload();
         });
     } else {
-        location.reload(); // Reset the select if cancelled
+        location.reload();
     }
 }
 
@@ -279,6 +305,7 @@ function deleteUser(userId, username) {
     }
 }
 
+// Add event listener for the Add User button
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addUserBtn').addEventListener('click', openAddUserModal);
 });
