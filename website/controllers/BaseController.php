@@ -10,9 +10,10 @@ abstract class BaseController {
         // Start session
         Session::start();
         
-        // Set timezone
-        $config = require_once __DIR__ . '/../config/app.php';
-        date_default_timezone_set($config['timezone']);
+        // Set timezone safely - require without require_once to get array
+        $config = require __DIR__ . '/../config/app.php';
+        $timezone = $config['timezone'] ?? 'UTC';
+        date_default_timezone_set($timezone);
     }
     
     protected function requireAuth(): void {
