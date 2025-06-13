@@ -1,0 +1,188 @@
+<?php
+class AuthController extends BaseController {
+    
+    public function showLogin(): void {
+        // Redirect if already logged in
+        if (Session::isLoggedIn()) {
+            $this->redirect('/dashboard');
+        }
+        
+        $this->view('auth/login', [
+            'title' => 'Sign In - InvestTracker',
+            'csrf_token' => $this->generateCSRF()
+        ]);
+    }
+    
+    public function login(): void {
+        if (!$this->isPost()) {
+            $this->redirect('/login');
+        }
+        
+        if (!$this->validateCSRF()) {
+            $this->redirect('/login', 'Invalid security token. Please try again.');
+        }
+        
+        $input = $this->sanitizeInput($_POST);
+        
+        // Validate input
+        $validator = Validator::make($input, [
+            'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
+            'password' => ['required', 'string', ['min', 6]]
+        ]);
+        
+        if (!$validator->validate()) {
+            // Store old input and errors
+            foreach ($input as $key => $value) {
+                if ($key !== 'password') {
+                    Session::set("old_$key", $value);
+                }
+            }
+            
+            foreach ($validator->getErrors() as $field => $errors) {
+                Session::set("error_$field", $errors[0]);
+            }
+            
+            $this->redirect('/login', 'Please fix the errors below.');
+        }
+        
+        // Attempt authentication
+        $user = $this->user->authenticate($input['username'], $input['password']);
+        
+        if ($user) {
+            Session::setUser($user);
+            
+            // Clear old input
+            $this->clearOldInput();
+            
+            // Redirect to intended page or dashboard
+            $redirectTo = Session::get('intended_url', '/dashboard');
+            Session::remove('intended_url');
+            
+            $this->redirect($redirectTo, 'Welcome back, ' . $user['username'] . '!');
+        } else {
+            // Store username for convenience
+            Session::set('old_username', $input['username']);
+            $this->redirect('/login', 'Invalid username or password.');
+        }
+    }
+    
+    public function register(): void {
+        if (!$this->isPost()) {
+            $this->redirect('/login');
+        }
+        
+        if (!$this->validateCSRF()) {
+            $this->redirect('/login', 'Invalid security token. Please try again.');
+        }
+        
+        $input = $this->sanitizeInput($_POST);
+        
+        // Validate input
+        $validator = Validator::make($input, [
+            'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
+            'password' => ['required', 'string', ['min', 6], ['max', 255]],
+            'confirm_password' => ['required', 'string']
+        ]);
+        
+        if (!$validator->validate()) {
+            $this->handleValidationErrors($validator, $input);
+            $this->redirect('/login', 'Please fix the errors below.');
+        }
+        
+        // Check password confirmation
+        if ($input['password'] !== $input['confirm_password']) {
+            Session::set('old_username', $input['username']);
+            Session::set('error_confirm_password', 'Passwords do not match.');
+            $this->redirect('/login', 'Passwords do not match.');
+        }
+        
+        // Create user
+        $userId = $this->user->create($input['username'], $input['password']);
+        
+        if ($userId) {
+            // Auto-login the new user
+            $user = $this->user->getById($userId);
+            if ($user) {
+                Session::setUser($user);
+                $this->clearOldInput();
+                $this->redirect('/dashboard', 'Account created successfully! Welcome to InvestTracker!');
+            }
+        }
+        
+        Session::set('old_username', $input['username']);
+        $this->redirect('/login', 'Username already exists or registration failed. Please try again.');
+    }
+    
+    public function logout(): void {
+        Session::logout();
+        $this->redirect('/login', 'You have been logged out successfully.');
+    }
+    
+    public function changePassword(): void {
+        $this->requireAuth();
+        
+        if (!$this->isPost()) {
+            $this->redirect('/settings');
+        }
+        
+        if (!$this->validateCSRF()) {
+            $this->redirect('/settings', 'Invalid security token. Please try again.');
+        }
+        
+        $input = $this->sanitizeInput($_POST);
+        $userId = Session::getUserId();
+        
+        // Validate input
+        $validator = Validator::make($input, [
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', ['min', 6], ['max', 255]],
+            'confirm_password' => ['required', 'string']
+        ]);
+        
+        if (!$validator->validate()) {
+            $this->handleValidationErrors($validator, $input);
+            $this->redirect('/settings', 'Please fix the errors below.');
+        }
+        
+        // Check password confirmation
+        if ($input['new_password'] !== $input['confirm_password']) {
+            Session::set('error_confirm_password', 'Passwords do not match.');
+            $this->redirect('/settings', 'Passwords do not match.');
+        }
+        
+        // Verify current password
+        $currentUser = Session::getUser();
+        if (!$this->user->authenticate($currentUser['username'], $input['current_password'])) {
+            Session::set('error_current_password', 'Current password is incorrect.');
+            $this->redirect('/settings', 'Current password is incorrect.');
+        }
+        
+        // Change password
+        if ($this->user->changePassword($userId, $input['new_password'])) {
+            $this->redirect('/settings', 'Password changed successfully.');
+        } else {
+            $this->redirect('/settings', 'Failed to change password. Please try again.');
+        }
+    }
+    
+    private function handleValidationErrors(Validator $validator, array $input): void {
+        // Store old input (except passwords)
+        foreach ($input as $key => $value) {
+            if (!str_contains($key, 'password')) {
+                Session::set("old_$key", $value);
+            }
+        }
+        
+        // Store errors
+        foreach ($validator->getErrors() as $field => $errors) {
+            Session::set("error_$field", $errors[0]);
+        }
+    }
+    
+    private function clearOldInput(): void {
+        $keys = ['old_username', 'error_username', 'error_password', 'error_confirm_password', 'error_current_password', 'error_new_password'];
+        foreach ($keys as $key) {
+            Session::remove($key);
+        }
+    }
+}

@@ -1,25 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>InvestTracker - Sign In</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="scripts.js" defer></script>
-</head>
-<body>
-    <div class="container">
-        <h1>InvestTracker</h1>
-        <form class="form-box" method="post" action="#">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Input">
+<?php
 
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Input">
+// Error reporting (disable in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-            <div class="button-full">
-                <button type="button" onclick="showPopup('loginOrRegister')">SIGN IN</button>
-            </div>
-        </form>
-    </div>
-</body>
-</html>
+// Load environment variables if .env file exists
+if (file_exists(__DIR__ . '/.env')) {
+    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && !str_starts_with(trim($line), '#')) {
+            list($key, $value) = explode('=', $line, 2);
+            $_ENV[trim($key)] = trim($value);
+        }
+    }
+}
+
+// Set default timezone
+date_default_timezone_set('UTC');
+
+// Include the router
+require_once __DIR__ . '/router.php';
