@@ -45,25 +45,39 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Please fix the errors below.');
         }
         
-        // Attempt authentication using login method
-        $userData = $this->user->login($input['username'], $input['password']);
+        try {
+            // Attempt authentication using login method
+            $userData = $this->user->login($input['username'], $input['password']);
 
-        if ($userData) {
-            Session::setUser($userData);
+            if ($userData) {
+                Session::setUser($userData);
 
-            // Clear old input
-            $this->clearOldInput();
+                // Clear old input
+                $this->clearOldInput();
 
-            // Redirect to intended page or dashboard
-            $redirectTo = Session::get('intended_url', '/dashboard');
-            Session::remove('intended_url');
+                // Redirect to intended page or dashboard
+                $redirectTo = Session::get('intended_url', '/dashboard');
+                Session::remove('intended_url');
 
-            $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
-        } else {
-            // Store old input and set error for failed login
-            Session::set('login_old_username', $input['username']);
-            Session::set('login_error_credentials', 'Invalid username or password.');
-            $this->redirect('/login', 'Invalid username or password.');
+                $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
+            } else {
+                // Store old input and set error for failed login
+                Session::set('login_old_username', $input['username']);
+                Session::set('login_error_credentials', 'Invalid username or password.');
+                $this->redirect('/login', 'Invalid username or password.');
+            }
+        } catch (Exception $e) {
+            if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
+                // Handle inactive account
+                Session::set('login_old_username', $input['username']);
+                Session::set('login_error_credentials', 'Your account is inactive. Please contact the administrator to activate your account.');
+                $this->redirect('/login', 'Your account is inactive. Please contact the administrator to activate your account.');
+            } else {
+                // Handle other errors
+                Session::set('login_old_username', $input['username']);
+                Session::set('login_error_credentials', 'A technical error occurred. Please try again.');
+                $this->redirect('/login', 'A technical error occurred. Please try again.');
+            }
         }
     }
     

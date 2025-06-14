@@ -12,7 +12,17 @@ class User {
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($user && password_verify($password, $user['password'])) {
+            if (!$user) {
+                return null; // User not found
+            }
+
+            // Check if user is active
+            if (!$user['active']) {
+                // You can throw an exception or return a specific value to indicate inactive user
+                throw new Exception('ACCOUNT_INACTIVE');
+            }
+
+            if (password_verify($password, $user['password'])) {
                 // Update last login
                 $updateStmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
                 $updateStmt->execute([$user['id']]);
@@ -21,7 +31,10 @@ class User {
             }
 
             return null;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
+            if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
+                throw $e; // Re-throw to handle in controller
+            }
             error_log("Login error: " . $e->getMessage());
             return null;
         }
