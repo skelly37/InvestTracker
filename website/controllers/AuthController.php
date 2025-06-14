@@ -95,7 +95,7 @@ class AuthController extends BaseController {
         }
         
         // Create user using register method (with dummy email for now)
-        $result = $this->user->register($input['username'], $input['username'] . '@local.test', $input['password']);
+        $result = $this->user->register($input['username'], $input['password']);
         
         if ($result) {
             $this->clearOldInput();
@@ -172,6 +172,38 @@ class AuthController extends BaseController {
         $keys = ['old_username', 'error_username', 'error_password', 'error_confirm_password', 'error_current_password', 'error_new_password'];
         foreach ($keys as $key) {
             Session::remove($key);
+        }
+    }
+
+    public function deleteAccount(): void {
+        $this->requireAuth();
+
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $userId = Session::getUserId();
+
+        try {
+            // Delete user account
+            $result = $this->user->deleteUser($userId);
+
+            if ($result) {
+                // Logout user after successful deletion
+                Session::logout();
+                $this->json(['success' => true, 'message' => 'Account deleted successfully', 'redirect' => '/login']);
+            } else {
+                $this->json(['success' => false, 'message' => 'Failed to delete account'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Delete account error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'An error occurred while deleting account'], 500);
         }
     }
 }

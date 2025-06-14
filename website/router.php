@@ -43,6 +43,7 @@ $routes = [
         '/login' => ['AuthController', 'login'],
         '/register' => ['AuthController', 'register'],
         '/auth/change-password' => ['AuthController', 'changePassword'],
+        '/auth/delete-account' => ['AuthController', 'deleteAccount'],
         '/dashboard/add-favorite' => ['DashboardController', 'addFavorite'],
         '/dashboard/remove-favorite' => ['DashboardController', 'removeFavorite'],
         '/dashboard/update-preferences' => ['DashboardController', 'updatePreferences'],

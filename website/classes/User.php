@@ -33,7 +33,7 @@ class User {
         }
     }
     
-    public function register($username, $email, $password) {
+    public function register($username, $password) {
         try {
             // Sprawdź czy username już istnieje
             $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
@@ -44,8 +44,8 @@ class User {
             
             // Utwórz nowego użytkownika
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $this->db->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())");
-            return $stmt->execute([$username, $email, $hashedPassword]);
+            $stmt = $this->db->prepare("INSERT INTO users (username, password, role, created_at) VALUES (?, ?, 'user', NOW())");
+            return $stmt->execute([$username, $hashedPassword]);
             
         } catch (PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
