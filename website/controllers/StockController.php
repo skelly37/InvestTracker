@@ -70,7 +70,7 @@ class StockController extends BaseController {
         $this->requireAuth();
         
         $symbol = $_GET['symbol'] ?? '';
-        $period = $_GET['period'] ?? '1d';
+        $period = $_GET['interval'] ?? '1d';
         
         if (empty($symbol)) {
             $this->json(['success' => false, 'message' => 'Symbol is required'], 400);

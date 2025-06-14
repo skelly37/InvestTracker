@@ -255,10 +255,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('currentSymbol:', currentSymbol);
             console.log('currentStockInfo:', currentStockInfo);
 
+    currentInterval = interval;
+    console.log('Updated currentInterval to:', currentInterval);
+
     showChartLoading(true);
     
     // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
-    fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`)
+    fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(currentInterval)}`)
         .then(response => response.json())
         .then(historyData => {
             const currentInfo = { currency: document.getElementById('currency').textContent || 'USD' };
