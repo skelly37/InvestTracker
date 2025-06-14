@@ -52,11 +52,19 @@ require_once __DIR__ . '/../layouts/navigation.php';
                                             <div class="flex flex--gap">
                                                 <a href="/stock?symbol=<?= urlencode($result['symbol']) ?>" 
                                                    class="btn btn--small btn--primary">View</a>
-                                                <button class="btn btn--small btn--secondary add-favorite-btn" 
-                                                        data-symbol="<?= htmlspecialchars($result['symbol']) ?>"
-                                                        data-csrf="<?= htmlspecialchars(csrf_token()) ?>">
-                                                    ❤️ Add
-                                                </button>
+                                                <?php if ($result['isFavorite']): ?>
+                                                    <button class="btn btn--small btn--primary remove-favorite-btn"
+                                                            data-symbol="<?= htmlspecialchars($result['symbol']) ?>"
+                                                            data-csrf="<?= htmlspecialchars(csrf_token()) ?>">
+                                                        ✅ Added
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button class="btn btn--small btn--secondary add-favorite-btn"
+                                                            data-symbol="<?= htmlspecialchars($result['symbol']) ?>"
+                                                            data-csrf="<?= htmlspecialchars(csrf_token()) ?>">
+                                                        ❤️ Add
+                                                    </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -88,7 +96,9 @@ require_once __DIR__ . '/../layouts/navigation.php';
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const addButtons = document.querySelectorAll('.add-favorite-btn');
+    const removeButtons = document.querySelectorAll('.remove-favorite-btn');
     
+    // Add to favorites
     addButtons.forEach(button => {
         button.addEventListener('click', function() {
             const symbol = this.dataset.symbol;
@@ -111,9 +121,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success) {
                         this.textContent = '✅ Added';
-                        this.disabled = true;
-                        this.classList.remove('btn--secondary');
-                        this.classList.add('btn--primary');
+                        this.classList.remove('btn--secondary', 'add-favorite-btn');
+                        this.classList.add('btn--primary', 'remove-favorite-btn');
+                        
+                        // Add remove functionality to this button
+                        this.addEventListener('click', createRemoveHandler(symbol, csrf));
                     } else {
                         alert(data.message || 'Failed to add to favorites');
                     }
@@ -124,6 +136,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
+    
+    // Remove from favorites
+    removeButtons.forEach(button => {
+        button.addEventListener('click', createRemoveHandler(
+            button.dataset.symbol, 
+            button.dataset.csrf
+        ));
+    });
+    
+    function createRemoveHandler(symbol, csrf) {
+        return function() {
+            fetch('/dashboard/remove-favorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '❤️ Add';
+                    this.classList.remove('btn--primary', 'remove-favorite-btn');
+                    this.classList.add('btn--secondary', 'add-favorite-btn');
+                    
+                    // Add add functionality back to this button
+                    this.addEventListener('click', function() {
+                        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                            .then(response => response.json())
+                            .then(stockData => {
+                                return fetch('/dashboard/add-favorite', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+                                });
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    this.textContent = '✅ Added';
+                                    this.classList.remove('btn--secondary', 'add-favorite-btn');
+                                    this.classList.add('btn--primary', 'remove-favorite-btn');
+                                } else {
+                                    alert(data.message || 'Failed to add to favorites');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Failed to add to favorites');
+                            });
+                    });
+                } else {
+                    alert(data.message || 'Failed to remove from favorites');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to remove from favorites');
+            });
+        };
+    }
 });
 </script>
 

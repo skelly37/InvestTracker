@@ -14,6 +14,13 @@ class StockController extends BaseController {
             try {
                 $results = $this->stock->searchStocks($query);
                 $totalResults = count($results);
+                
+                // Check which results are already in favorites
+                $userId = Session::getUserId();
+                foreach ($results as &$result) {
+                    $result['isFavorite'] = $this->stock->isFavorite($userId, $result['symbol']);
+                }
+                
             } catch (Exception $e) {
                 error_log("Search error: " . $e->getMessage());
                 $error = 'Search temporarily unavailable. Please try again later.';
