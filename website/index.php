@@ -16,3 +16,26 @@ require_once __DIR__ . '/controllers/UserController.php';
 require_once __DIR__ . '/controllers/StockController.php';
 
 require_once __DIR__ . '/router.php';
+
+
+function loadGlobalHelperFunctions(): void {
+    if (!function_exists('isCurrentPage')) {
+        function isCurrentPage(string $path): bool {
+            return $_SERVER['REQUEST_URI'] === $path ||
+                   strpos($_SERVER['REQUEST_URI'], $path) === 0;
+        }
+    }
+
+    if (!function_exists('formatDate')) {
+        function formatDate(?string $date): string {
+            if (!$date) return 'N/A';
+            return date('M j, Y g:i A', strtotime($date));
+        }
+    }
+
+    if (!function_exists('csrf_token')) {
+        function csrf_token(): string {
+            return Session::get('csrf_token', '');
+        }
+    }
+}

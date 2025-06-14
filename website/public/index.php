@@ -113,20 +113,6 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $req
     }
 }
 
-if (strpos($requestUri, '/api/') === 0 || strpos($requestUri, '/stock/') === 0) {
-    $clientIp = get_client_ip();
-    $rateLimitKey = 'api_' . $clientIp;
-    
-    if (!check_rate_limit($rateLimitKey, 100, 3600)) {
-        http_response_code(429);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'error' => 'Rate limit exceeded',
-            'message' => 'Too many requests. Please try again later.'
-        ]);
-        exit;
-    }
-}
 
 try {
     require_once APP_ROOT . '/router.php';

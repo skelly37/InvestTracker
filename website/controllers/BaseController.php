@@ -45,9 +45,7 @@ abstract class BaseController {
         if ($flashMessage) {
             Session::remove('flash_message');
         }
-        
-        $this->loadHelperFunctions();
-        
+
         require_once __DIR__ . "/../views/$view.php";
     }
     
@@ -91,59 +89,5 @@ abstract class BaseController {
     
     protected function isGet(): bool {
         return $this->getRequestMethod() === 'GET';
-    }
-    
-    private function loadHelperFunctions(): void {
-        if (!function_exists('isCurrentPage')) {
-            function isCurrentPage(string $path): bool {
-                return $_SERVER['REQUEST_URI'] === $path || 
-                       strpos($_SERVER['REQUEST_URI'], $path) === 0;
-            }
-        }
-        
-        if (!function_exists('isAdmin')) {
-            function isAdmin(): bool {
-                return Session::isAdmin();
-            }
-        }
-        
-        if (!function_exists('formatPrice')) {
-            function formatPrice(?float $price): string {
-                return $price ? '$' . number_format($price, 2) : 'N/A';
-            }
-        }
-        
-        if (!function_exists('formatChange')) {
-            function formatChange(?float $change, ?float $changePercent): string {
-                if ($change === null || $changePercent === null) {
-                    return 'N/A';
-                }
-                
-                $sign = $change >= 0 ? '+' : '';
-                $class = $change > 0 ? 'text--success' : ($change < 0 ? 'text--danger' : 'text--neutral');
-                
-                return "<span class=\"$class\">{$sign}" . number_format($change, 2) . 
-                       " ({$sign}" . number_format($changePercent, 2) . "%)</span>";
-            }
-        }
-        
-        if (!function_exists('formatDate')) {
-            function formatDate(?string $date): string {
-                if (!$date) return 'N/A';
-                return date('M j, Y g:i A', strtotime($date));
-            }
-        }
-        
-        if (!function_exists('csrf_token')) {
-            function csrf_token(): string {
-                return Session::get('csrf_token', '');
-            }
-        }
-        
-        if (!function_exists('old')) {
-            function old(string $key, string $default = ''): string {
-                return Session::get("old_$key", $default);
-            }
-        }
     }
 }
