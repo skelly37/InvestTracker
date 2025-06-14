@@ -30,7 +30,7 @@ class TimeScale(Enum):
     Day       = ("1d",  "15m")
     Week      = ("5d",  "1h")
     Month     = ("1mo", "1d")
-    Quarter   = ("3mo", "1d")  # skip to 3d in post-process
+    Quarter   = ("3mo", "1d")
     Year      = ("1y",  "1wk")
     FiveYears = ("5y",  "1mo")
     Max       = ("max", "3mo")
@@ -53,8 +53,6 @@ class TimeScale(Enum):
 
 def get_info(ticker: Ticker) -> TickerInfo:
     info = ticker.info
-
-    print(info)
 
     return TickerInfo(
         name=info["longName"],

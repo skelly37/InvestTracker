@@ -25,25 +25,17 @@ def server():
     
     @app.route("/quote")
     def quote():
-        symbol = request.args.get("q", "")
-        symbol = unquote(symbol)
+        symbol = unquote(request.args.get("q", ""))
         ticker = yf.Ticker(symbol)
-        res = asdict(get_info(ticker))
-        print(res)
-        return res
+        return asdict(get_info(ticker))
 
 
     @app.route("/history")
     def history():
-        symbol = request.args.get("q", "")
+        symbol = unquote(request.args.get("q", ""))
         interval = request.args.get("interval", "")
-        symbol = unquote(symbol)
         ticker = yf.Ticker(symbol)
-
-        res = get_history(ticker, TimeScale.get_time_scale(interval))
-
-        print(res)
-        return res
+        return get_history(ticker, TimeScale.get_time_scale(interval))
 
     
     app.run(host='0.0.0.0', port=5000, debug=False)
