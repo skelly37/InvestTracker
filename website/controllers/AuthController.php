@@ -31,15 +31,15 @@ class AuthController extends BaseController {
         ]);
         
         if (!$validator->validate()) {
-            // Store old input and errors
+            // Store old input and errors for LOGIN
             foreach ($input as $key => $value) {
                 if ($key !== 'password') {
-                    Session::set("old_$key", $value);
+                    Session::set("login_old_$key", $value);
                 }
             }
             
             foreach ($validator->getErrors() as $field => $errors) {
-                Session::set("error_$field", $errors[0]);
+                Session::set("login_error_$field", $errors[0]);
             }
             
             $this->redirect('/login', 'Please fix the errors below.');
@@ -59,6 +59,11 @@ class AuthController extends BaseController {
             Session::remove('intended_url');
 
             $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
+        } else {
+            // Store old input and set error for failed login
+            Session::set('login_old_username', $input['username']);
+            Session::set('login_error_credentials', 'Invalid username or password.');
+            $this->redirect('/login', 'Invalid username or password.');
         }
     }
     
@@ -81,14 +86,14 @@ class AuthController extends BaseController {
         ]);
         
         if (!$validator->validate()) {
-            $this->handleValidationErrors($validator, $input);
+            $this->handleRegistrationValidationErrors($validator, $input);
             $this->redirect('/login', 'Please fix the errors below.');
         }
         
         // Check password confirmation
         if ($input['password'] !== $input['confirm_password']) {
-            Session::set('old_username', $input['username']);
-            Session::set('error_confirm_password', 'Passwords do not match.');
+            Session::set('register_old_username', $input['username']);
+            Session::set('register_error_confirm_password', 'Passwords do not match.');
             $this->redirect('/login', 'Passwords do not match.');
         }
         
@@ -99,7 +104,8 @@ class AuthController extends BaseController {
             $this->clearOldInput();
             $this->redirect('/login', 'Account created successfully. Please login.');
         } else {
-            Session::set('old_username', $input['username']);
+            Session::set('register_old_username', $input['username']);
+            Session::set('register_error_username', 'Username already exists. Please choose a different one.');
             $this->redirect('/login', 'Failed to create account. Username may already exist.');
         }
     }
@@ -166,9 +172,33 @@ class AuthController extends BaseController {
         }
     }
     
+    private function handleRegistrationValidationErrors(Validator $validator, array $input): void {
+        // Store old input for REGISTRATION (except passwords)
+        foreach ($input as $key => $value) {
+            if (!str_contains($key, 'password')) {
+                Session::set("register_old_$key", $value);
+            }
+        }
+        
+        // Store errors for REGISTRATION
+        foreach ($validator->getErrors() as $field => $errors) {
+            Session::set("register_error_$field", $errors[0]);
+        }
+    }
+    
     private function clearOldInput(): void {
-        $keys = ['old_username', 'error_username', 'error_password', 'error_confirm_password', 'error_current_password', 'error_new_password'];
-        foreach ($keys as $key) {
+        // Clear LOGIN data
+        $loginKeys = ['login_old_username', 'login_error_username', 'login_error_password', 'login_error_credentials'];
+        
+        // Clear REGISTRATION data
+        $registerKeys = ['register_old_username', 'register_error_username', 'register_error_password', 'register_error_confirm_password'];
+        
+        // Clear SETTINGS data
+        $settingsKeys = ['old_username', 'error_username', 'error_password', 'error_confirm_password', 'error_current_password', 'error_new_password'];
+        
+        $allKeys = array_merge($loginKeys, $registerKeys, $settingsKeys);
+        
+        foreach ($allKeys as $key) {
             Session::remove($key);
         }
     }

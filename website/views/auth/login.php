@@ -15,22 +15,29 @@ require_once __DIR__ . '/../layouts/header.php';
         <form method="POST" action="/login">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
             
+            <?php if ($loginCredentialsError = Session::get('login_error_credentials')): ?>
+                <div class="alert alert--danger">
+                    <?= htmlspecialchars($loginCredentialsError) ?>
+                </div>
+                <?php Session::remove('login_error_credentials'); ?>
+            <?php endif; ?>
+            
             <div class="form-group">
                 <label class="label" for="username">Username</label>
-                <input type="text" id="username" name="username" class="input <?= Session::get('error_username') ? 'input--error' : '' ?>" 
-                       value="<?= htmlspecialchars(old('username')) ?>" required>
-                <?php if ($error = Session::get('error_username')): ?>
+                <input type="text" id="username" name="username" class="input <?= Session::get('login_error_username') ? 'input--error' : '' ?>" 
+                       value="<?= htmlspecialchars(Session::get('login_old_username', '')) ?>" required>
+                <?php if ($error = Session::get('login_error_username')): ?>
                     <div class="form-error"><?= htmlspecialchars($error) ?></div>
-                    <?php Session::remove('error_username'); ?>
+                    <?php Session::remove('login_error_username'); ?>
                 <?php endif; ?>
             </div>
             
             <div class="form-group">
                 <label class="label" for="password">Password</label>
-                <input type="password" id="password" name="password" class="input <?= Session::get('error_password') ? 'input--error' : '' ?>" required>
-                <?php if ($error = Session::get('error_password')): ?>
+                <input type="password" id="password" name="password" class="input <?= Session::get('login_error_password') ? 'input--error' : '' ?>" required>
+                <?php if ($error = Session::get('login_error_password')): ?>
                     <div class="form-error"><?= htmlspecialchars($error) ?></div>
-                    <?php Session::remove('error_password'); ?>
+                    <?php Session::remove('login_error_password'); ?>
                 <?php endif; ?>
             </div>
             
@@ -46,21 +53,29 @@ require_once __DIR__ . '/../layouts/header.php';
                 
                 <div class="form-group">
                     <label class="label" for="reg_username">Username</label>
-                    <input type="text" id="reg_username" name="username" class="input <?= Session::get('error_username') ? 'input--error' : '' ?>" 
-                           value="<?= htmlspecialchars(old('username')) ?>" required>
+                    <input type="text" id="reg_username" name="username" class="input <?= Session::get('register_error_username') ? 'input--error' : '' ?>" 
+                           value="<?= htmlspecialchars(Session::get('register_old_username', '')) ?>" required>
+                    <?php if ($error = Session::get('register_error_username')): ?>
+                        <div class="form-error"><?= htmlspecialchars($error) ?></div>
+                        <?php Session::remove('register_error_username'); ?>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="form-group">
                     <label class="label" for="reg_password">Password</label>
-                    <input type="password" id="reg_password" name="password" class="input <?= Session::get('error_password') ? 'input--error' : '' ?>" required>
+                    <input type="password" id="reg_password" name="password" class="input <?= Session::get('register_error_password') ? 'input--error' : '' ?>" required>
+                    <?php if ($error = Session::get('register_error_password')): ?>
+                        <div class="form-error"><?= htmlspecialchars($error) ?></div>
+                        <?php Session::remove('register_error_password'); ?>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="form-group">
                     <label class="label" for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="input <?= Session::get('error_confirm_password') ? 'input--error' : '' ?>" required>
-                    <?php if ($error = Session::get('error_confirm_password')): ?>
+                    <input type="password" id="confirm_password" name="confirm_password" class="input <?= Session::get('register_error_confirm_password') ? 'input--error' : '' ?>" required>
+                    <?php if ($error = Session::get('register_error_confirm_password')): ?>
                         <div class="form-error"><?= htmlspecialchars($error) ?></div>
-                        <?php Session::remove('error_confirm_password'); ?>
+                        <?php Session::remove('register_error_confirm_password'); ?>
                     <?php endif; ?>
                 </div>
                 
@@ -72,4 +87,9 @@ require_once __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../layouts/footer.php'; ?>
+<?php 
+// Clean up old session data at the end
+Session::remove('login_old_username');
+Session::remove('register_old_username');
+require_once __DIR__ . '/../layouts/footer.php'; 
+?>
