@@ -1,6 +1,5 @@
 <?php
 class AuthController extends BaseController {
-    
     public function showLogin(): void {
         if (Session::isLoggedIn()) {
             $this->redirect('/dashboard');

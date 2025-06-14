@@ -95,7 +95,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
     </div>
 </div>
 
-<!-- Add User Modal -->
 <div id="addUserModal" class="modal hidden">
     <div class="modal-overlay" onclick="closeAddUserModal()"></div>
     <div class="modal-content">

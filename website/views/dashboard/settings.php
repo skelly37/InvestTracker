@@ -15,7 +15,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
             <h1 class="mb-3">Settings</h1>
             
             <div class="settings-grid">
-                <!-- Account Information -->
                 <div class="settings-section">
                     <div class="settings-section__title">Account Information</div>
                     
@@ -37,7 +36,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
                 
-                <!-- Change Password -->
                 <div class="settings-section">
                     <div class="settings-section__title">Change Password</div>
                     
@@ -80,7 +78,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </form>
                 </div>
                 
-                <!-- Application Settings -->
                 <div class="settings-section">
                     <div class="settings-section__title">Preferences</div>
                     
@@ -104,7 +101,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
                 
-                <!-- Data Management -->
                 <div class="settings-section">
                     <div class="settings-section__title">Data Management</div>
                     
@@ -119,7 +115,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
                 
-                <!-- Danger Zone -->
                 <div class="settings-section danger-zone">
                     <div class="settings-section__title">Danger Zone</div>
                     

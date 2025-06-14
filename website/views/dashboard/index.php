@@ -19,7 +19,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
             <?php endif; ?>
             
             <div class="dashboard-columns">
-                <!-- Recently Viewed -->
                 <div class="dashboard-column">
                     <div class="dashboard-column__title">Recently Viewed</div>
                     <div class="divider"></div>
@@ -43,7 +42,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
                 
-                <!-- Popular Stocks -->
                 <div class="dashboard-column">
                     <div class="dashboard-column__title">Popular Stocks</div>
                     <div class="divider"></div>
@@ -67,7 +65,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
                 
-                <!-- Market Indices -->
                 <div class="dashboard-column">
                     <div class="dashboard-column__title">Market Indices</div>
                     <div class="divider"></div>

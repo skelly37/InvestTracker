@@ -12,7 +12,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                 </div>
             <?php endif; ?>
             
-            <!-- Stock Header -->
             <div class="stock-header">
                 <div class="stock-header__ticker"><?= htmlspecialchars($symbol) ?></div>
                 <div class="stock-header__name" id="stockName">Loading...</div>
@@ -41,9 +40,7 @@ require_once __DIR__ . '/../layouts/navigation.php';
                 </div>
             </div>
             
-            <!-- Chart Section -->
             <div class="chart-section">
-                <!-- Time Interval Selector -->
                 <div class="chart-controls mb-3">
                     <label class="label">Chart Time Interval:</label>
                     <select class="input" id="chartTimeInterval" style="width: 200px; display: inline-block;">
@@ -72,27 +69,26 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 
             
-            <!-- Analysis Sections -->
             <div class="analysis-grid">
                 <div class="analysis-section">
                     <div class="analysis-section__title">Price Information</div>
                     <div class="metric">
-        <span class="metric__label">Previous Close Price:</span>
-        <span class="metric__value" id="previousClose">Loading...</span>
-    </div>
-    <div class="metric">
-        <span class="metric__label">Open Price:</span>
-        <span class="metric__value" id="openPrice">Loading...</span>
-    </div>
-    <div class="metric">
-        <span class="metric__label">Exchange:</span>
-        <span class="metric__value" id="exchange">Loading...</span>
-    </div>
-    <div class="metric">
-        <span class="metric__label">Currency:</span>
-        <span class="metric__value" id="currency">Loading...</span>
-    </div>
-</div>
+                    <span class="metric__label">Previous Close Price:</span>
+                    <span class="metric__value" id="previousClose">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric__label">Open Price:</span>
+                    <span class="metric__value" id="openPrice">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric__label">Exchange:</span>
+                    <span class="metric__value" id="exchange">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric__label">Currency:</span>
+                    <span class="metric__value" id="currency">Loading...</span>
+                </div>
+            </div>
                 
                 <div class="analysis-section">
                     <div class="analysis-section__title">Financial Metrics</div>
