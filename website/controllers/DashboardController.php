@@ -8,7 +8,7 @@ class DashboardController extends BaseController {
         
         try {
             // Get user's recently viewed stocks
-            $recentlyViewed = $this->stock->getRecentlyViewed($userId, 5);
+            $recentlyViewed = $this->stock->getRecentlyViewed($userId, 4);
             
             // Get popular stocks
             $popularStocks = $this->stock->getPopularStocks();
@@ -19,7 +19,7 @@ class DashboardController extends BaseController {
             $this->view('dashboard/index', [
                 'title' => 'Dashboard - InvestTracker',
                 'recentlyViewed' => $recentlyViewed,
-                'popularStocks' => array_slice($popularStocks, 0, 5),
+                'popularStocks' => array_slice($popularStocks, 0, 4),
                 'indices' => $indices
             ]);
             

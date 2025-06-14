@@ -94,28 +94,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const symbol = this.dataset.symbol;
             const csrf = this.dataset.csrf;
             
-            fetch('/dashboard/add-favorite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = '✅ Added';
-                    this.disabled = true;
-                    this.classList.remove('btn--secondary');
-                    this.classList.add('btn--primary');
-                } else {
-                    alert(data.message || 'Failed to add to favorites');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to add to favorites');
-            });
+            // Najpierw pobierz dane z Twojego serwera Flask
+            fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                .then(response => response.json())
+                .then(stockData => {
+                    // Potem dodaj do ulubionych
+                    return fetch('/dashboard/add-favorite', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.textContent = '✅ Added';
+                        this.disabled = true;
+                        this.classList.remove('btn--secondary');
+                        this.classList.add('btn--primary');
+                    } else {
+                        alert(data.message || 'Failed to add to favorites');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to add to favorites');
+                });
         });
     });
 });

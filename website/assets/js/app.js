@@ -1,4 +1,3 @@
-
 // Global app functionality
 (function() {
     'use strict';
@@ -245,7 +244,7 @@
     // Global utility functions
     window.InvestTracker = {
         formatPrice: function(price) {
-            return price ? '$' + parseFloat(price).toFixed(2) : 'N/A';
+            return price ? parseFloat(price).toFixed(2) : 'N/A';
         },
         
         formatChange: function(change, changePercent) {

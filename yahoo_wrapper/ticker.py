@@ -7,10 +7,13 @@ from yfinance import Ticker
 @dataclass(frozen=True)
 class TickerInfo:
     name:         str
-    exchange:     str
     symbol:       str
-    currency:     str
     currentPrice: float
+
+    exchange:      str
+    currency:      str
+    previousClose: float
+    openPrice:     float
 
     priceToBook:        float
     returnOnAssets:     float
@@ -40,24 +43,35 @@ class TimeScale(Enum):
     def interval(self):
         return self.value[1]
 
+    @staticmethod
+    def get_time_scale(time_scale: str) -> "TimeScale":
+        for time_scale_enum in TimeScale:
+            if time_scale_enum.period == time_scale:
+                return time_scale_enum
+        raise ValueError(f"Invalid time scale: {time_scale}")
+
 
 def get_info(ticker: Ticker) -> TickerInfo:
     info = ticker.info
+
+    print(info)
 
     return TickerInfo(
         name=info["longName"],
         exchange=info["fullExchangeName"],
         symbol=info["symbol"],
         currency=info["currency"],
-        currentPrice=info["currentPrice"],
-        priceToBook=info["priceToBook"],
-        returnOnAssets=info["returnOnAssets"],
-        returnOnEquity=info["returnOnEquity"],
-        enterpriseToEbitda=info["enterpriseToEbitda"],
-        marketCap=info["marketCap"],
-        sharesOutstanding=info["sharesOutstanding"],
-        totalRevenue=info["totalRevenue"],
-        financialCurrency=info["financialCurrency"]
+        previousClose=info["previousClose"],
+        openPrice=info["open"],
+        currentPrice=info.get("currentPrice", info["regularMarketPrice"]),
+        priceToBook=info.get("priceToBook", 0),
+        returnOnAssets=info.get("returnOnAssets", 0),
+        returnOnEquity=info.get("returnOnEquity", 0),
+        enterpriseToEbitda=info.get("enterpriseToEbitda", 0),
+        marketCap=info.get("marketCap", 0),
+        sharesOutstanding=info.get("sharesOutstanding", 0),
+        totalRevenue=info.get("totalRevenue", 0),
+        financialCurrency=info.get("financialCurrency", 0)
     )
 
 

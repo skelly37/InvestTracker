@@ -60,18 +60,22 @@ require_once __DIR__ . '/../layouts/navigation.php';
                 <div class="analysis-section">
                     <div class="analysis-section__title">Price Information</div>
                     <div class="metric">
-                        <span class="metric__label">Current Price:</span>
-                        <span class="metric__value" id="currentPrice">Loading...</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Exchange:</span>
-                        <span class="metric__value" id="exchange">Loading...</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Currency:</span>
-                        <span class="metric__value" id="currency">Loading...</span>
-                    </div>
-                </div>
+        <span class="metric__label">Previous Close Price:</span>
+        <span class="metric__value" id="previousClose">Loading...</span>
+    </div>
+    <div class="metric">
+        <span class="metric__label">Open Price:</span>
+        <span class="metric__value" id="openPrice">Loading...</span>
+    </div>
+    <div class="metric">
+        <span class="metric__label">Exchange:</span>
+        <span class="metric__value" id="exchange">Loading...</span>
+    </div>
+    <div class="metric">
+        <span class="metric__label">Currency:</span>
+        <span class="metric__value" id="currency">Loading...</span>
+    </div>
+</div>
                 
                 <div class="analysis-section">
                     <div class="analysis-section__title">Financial Metrics</div>
@@ -166,83 +170,63 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function loadStockData(symbol) {
-        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.info && data.history) {
-                    updateStockInfo(data.info, data.history); // Pass history as second parameter
-                    loadChart(data);
-                    document.getElementById('chartLoading').classList.add('hidden');
-                } else {
-                    throw new Error('Invalid data format');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading stock data:', error);
-                document.getElementById('chartLoading').classList.add('hidden');
-                document.getElementById('chartError').classList.remove('hidden');
-            
-            // Update UI with error state
-            document.getElementById('stockName').textContent = 'Error loading data';
-            document.getElementById('stockPrice').textContent = 'N/A';
-            document.getElementById('stockChange').textContent = 'N/A';
-        });
+function loadStockData(symbol) {
+    // Load both quote and history data from your Flask server
+    Promise.all([
+        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`).then(response => response.json()),
+        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=1mo`).then(response => response.json())
+    ])
+    .then(([quoteData, historyData]) => {
+        updateStockInfo(quoteData, historyData);
+        loadChart({ info: quoteData, history: historyData });
+        document.getElementById('chartLoading').classList.add('hidden');
+    })
+    .catch(error => {
+        console.error('Error loading stock data:', error);
+        document.getElementById('chartLoading').classList.add('hidden');
+        document.getElementById('chartError').classList.remove('hidden');
+        
+        // Update UI with error state
+        document.getElementById('stockName').textContent = 'Error loading data';
+        document.getElementById('stockPrice').textContent = 'N/A';
+        document.getElementById('stockChange').textContent = 'N/A';
+    });
 }
+
+function updateStockInfo(info, history) {
+    document.getElementById('stockName').textContent = info.name || 'N/A';
+    document.getElementById('stockPrice').textContent = info.currentPrice?.toFixed(2) || 'N/A';
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
     
-    function updateStockInfo(info, history) {
-        document.getElementById('stockName').textContent = info.name || 'N/A';
-        // Remove currency from price display
-        document.getElementById('stockPrice').textContent = info.currentPrice?.toFixed(2) || 'N/A';
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+    // Calculate price change from currentPrice to previousClose
+    if (info.currentPrice && info.previousClose) {
+        const change = info.currentPrice - info.previousClose;
+        const changePercent = ((change / info.previousClose) * 100);
         
-        // Calculate price change from history
-        if (history && Object.keys(history).length > 1) {
-            const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
-            const prices = timestamps.map(t => history[t]);
-            
-            if (prices.length >= 2) {
-                const currentPrice = info.currentPrice || prices[prices.length - 1];
-                const previousPrice = prices[0]; // First price of the day
-                
-                const change = currentPrice - previousPrice;
-                const changePercent = ((change / previousPrice) * 100);
-                
-                const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-                const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-                const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
-                
-                document.getElementById('stockChange').innerHTML = 
-                    `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
-            } else {
-                document.getElementById('stockChange').textContent = 'N/A';
-            }
-        } else {
-            document.getElementById('stockChange').textContent = 'N/A';
-        }
+        const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+        const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
         
-        // Update metrics with safe element access
-        const updateElement = (id, value) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = value;
-        };
-        
-        updateElement('currentPrice', info.currentPrice?.toFixed(2) || 'N/A');
-        updateElement('exchange', info.exchange || 'N/A');
-        updateElement('currency', info.currency || 'N/A');
-        updateElement('priceToBook', info.priceToBook?.toFixed(2) || 'N/A');
-        updateElement('returnOnAssets', info.returnOnAssets ? 
-            `${(info.returnOnAssets * 100).toFixed(2)}%` : 'N/A');
-        updateElement('returnOnEquity', info.returnOnEquity ? 
-            `${(info.returnOnEquity * 100).toFixed(2)}%` : 'N/A');
-        updateElement('enterpriseToEbitda', info.enterpriseToEbitda?.toFixed(2) || 'N/A');
-        updateElement('marketCap', info.marketCap ? formatLargeNumber(info.marketCap) : 'N/A');
-        updateElement('sharesOutstanding', info.sharesOutstanding ? 
-            formatLargeNumber(info.sharesOutstanding) : 'N/A');
-        updateElement('totalRevenue', info.totalRevenue ? 
-            formatLargeNumber(info.totalRevenue) : 'N/A');
-        updateElement('financialCurrency', info.financialCurrency || 'N/A');
+        document.getElementById('stockChange').innerHTML = 
+            `<span style="color: ${change >= 0 ? 'green' : 'red'}">${changeText} (${changePercentText})</span>`;
     }
+    
+    // Update Price Information section
+    document.getElementById('previousClose').textContent = info.previousClose?.toFixed(2) || 'N/A';
+    document.getElementById('openPrice').textContent = info.openPrice?.toFixed(2) || 'N/A';
+    document.getElementById('exchange').textContent = info.exchange || 'N/A';
+    document.getElementById('currency').textContent = info.currency || 'N/A';
+    
+    // Update other sections
+    document.getElementById('priceToBook').textContent = info.priceToBook?.toFixed(2) || 'N/A';
+    document.getElementById('returnOnAssets').textContent = info.returnOnAssets ? (info.returnOnAssets * 100).toFixed(2) + '%' : 'N/A';
+    document.getElementById('returnOnEquity').textContent = info.returnOnEquity ? (info.returnOnEquity * 100).toFixed(2) + '%' : 'N/A';
+    document.getElementById('enterpriseToEbitda').textContent = info.enterpriseToEbitda?.toFixed(2) || 'N/A';
+    
+    document.getElementById('marketCap').textContent = info.marketCap ? formatLargeNumber(info.marketCap) : 'N/A';
+    document.getElementById('sharesOutstanding').textContent = info.sharesOutstanding ? formatLargeNumber(info.sharesOutstanding) : 'N/A';
+    document.getElementById('totalRevenue').textContent = info.totalRevenue ? formatLargeNumber(info.totalRevenue) : 'N/A';
+    document.getElementById('financialCurrency').textContent = info.financialCurrency || 'N/A';
+}
     
     function formatLargeNumber(num) {
         if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';

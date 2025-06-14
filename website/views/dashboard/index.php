@@ -24,21 +24,23 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="dashboard-column__title">Recently Viewed</div>
                     <div class="divider"></div>
                     
-                    <?php if (!empty($recentlyViewed)): ?>
-                        <?php foreach ($recentlyViewed as $item): ?>
-                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($item['symbol']) ?>">
-                                <div class="stock__name">
-                                    <a href="/stock?symbol=<?= urlencode($item['symbol']) ?>">
-                                        <span class="stock-name-text"><?= htmlspecialchars($item['symbol']) ?></span>
-                                    </a>
+                    <div id="recently-viewed-container">
+                        <?php if (!empty($recentlyViewed)): ?>
+                            <?php foreach ($recentlyViewed as $item): ?>
+                                <div class="stock-entry" data-symbol="<?= htmlspecialchars($item['symbol']) ?>">
+                                    <div class="stock__name">
+                                        <a href="/stock?symbol=<?= urlencode($item['symbol']) ?>">
+                                            <span class="stock-name-text"><?= htmlspecialchars($item['symbol']) ?></span>
+                                        </a>
+                                    </div>
+                                    <div class="stock__price stock-price">Loading...</div>
+                                    <div class="stock__change stock-change">Loading...</div>
                                 </div>
-                                <div class="stock__price stock-price">Loading...</div>
-                                <div class="stock__change stock-change">Loading...</div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p class="text-center">No recently viewed stocks</p>
-                    <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-center">No recently viewed stocks</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 
                 <!-- Popular Stocks -->
@@ -46,21 +48,23 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="dashboard-column__title">Popular Stocks</div>
                     <div class="divider"></div>
                     
-                    <?php if (!empty($popularStocks)): ?>
-                        <?php foreach ($popularStocks as $symbol): ?>
-                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
-                                <div class="stock__name">
-                                    <a href="/stock?symbol=<?= urlencode($symbol) ?>">
-                                        <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
-                                    </a>
+                    <div id="popular-stocks-container">
+                        <?php if (!empty($popularStocks)): ?>
+                            <?php foreach ($popularStocks as $symbol): ?>
+                                <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
+                                    <div class="stock__name">
+                                        <a href="/stock?symbol=<?= urlencode($symbol) ?>">
+                                            <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
+                                        </a>
+                                    </div>
+                                    <div class="stock__price stock-price">Loading...</div>
+                                    <div class="stock__change stock-change">Loading...</div>
                                 </div>
-                                <div class="stock__price stock-price">Loading...</div>
-                                <div class="stock__change stock-change">Loading...</div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p class="text-center">Unable to load popular stocks</p>
-                    <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-center">Unable to load popular stocks</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 
                 <!-- Market Indices -->
@@ -68,19 +72,21 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="dashboard-column__title">Market Indices</div>
                     <div class="divider"></div>
                     
-                    <?php if (!empty($indices)): ?>
-                        <?php foreach ($indices as $symbol): ?>
-                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
-                                <div class="stock__name">
-                                    <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
+                    <div id="market-indices-container">
+                        <?php if (!empty($indices)): ?>
+                            <?php foreach ($indices as $symbol): ?>
+                                <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
+                                    <div class="stock__name">
+                                        <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
+                                    </div>
+                                    <div class="stock__price stock-price">Loading...</div>
+                                    <div class="stock__change stock-change">Loading...</div>
                                 </div>
-                                <div class="stock__price stock-price">Loading...</div>
-                                <div class="stock__change stock-change">Loading...</div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p class="text-center">Unable to load market indices</p>
-                    <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-center">Unable to load market indices</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,75 +95,296 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const stockEntries = document.querySelectorAll('.stock-entry[data-symbol]');
+    console.log('Dashboard loading...');
     
-    // Load current data for each stock
-    stockEntries.forEach(entry => {
-        const symbol = entry.dataset.symbol;
-        loadStockData(symbol, entry);
-    });
+    // Load data for all sections
+    loadRecentlyViewed();
+    loadPopularStocks();
+    loadMarketIndices();
     
-    function loadStockData(symbol, entry) {
-        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.info) {
-                    updateStockEntry(entry, data.info, data.history);
-                } else {
-                    updateStockError(entry);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading stock data for', symbol, ':', error);
-                updateStockError(entry);
-            });
-    }
-    
-    function updateStockEntry(entry, info, history) {
-        // Update name if we got a full name
-        const nameElement = entry.querySelector('.stock-name-text');
-        if (info.name && nameElement) {
-            nameElement.textContent = info.name;
-        }
+    function loadRecentlyViewed() {
+        const recentlyViewed = <?= json_encode($recentlyViewed ?? []) ?>;
+        console.log('Recently viewed data:', recentlyViewed);
         
-        const priceElement = entry.querySelector('.stock-price');
-        const changeElement = entry.querySelector('.stock-change');
-        
-        if (info.currentPrice) {
-            priceElement.textContent = `${info.currency || 'USD'} ${info.currentPrice.toFixed(2)}`;
-            
-            // Calculate change from history if available
-            if (history && Object.keys(history).length > 1) {
-                const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
-                const prices = timestamps.map(t => history[t]);
+        if (recentlyViewed && recentlyViewed.length > 0) {
+            const promises = recentlyViewed.map(stock => {
+                const symbol = stock.symbol || stock.ticker || stock.name;
+                console.log('Loading recently viewed stock:', symbol, stock);
                 
-                if (prices.length >= 2) {
-                    const currentPrice = info.currentPrice;
-                    const previousPrice = prices[0];
-                    
-                    const change = currentPrice - previousPrice;
-                    const changePercent = ((change / previousPrice) * 100);
-                    
-                    const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-                    const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-                    const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
-                    
-                    changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
-                } else {
-                    changeElement.textContent = 'N/A';
+                if (!symbol) {
+                    console.error('No symbol found for recently viewed stock:', stock);
+                    return Promise.resolve(null);
                 }
-            } else {
-                changeElement.textContent = 'N/A';
-            }
+                
+                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                    .then(response => {
+                        console.log('Response for recently viewed', symbol, ':', response.status);
+                        return response.json();
+                    })
+                    .then(quote => {
+                        console.log('Quote data for recently viewed', symbol, ':', quote);
+                        return {
+                            symbol: symbol,
+                            name: quote.name || stock.name || 'N/A',
+                            currentPrice: quote.currentPrice || 0,
+                            previousClose: quote.previousClose || 0,
+                            currency: quote.currency || 'USD'
+                        };
+                    })
+                    .catch(error => {
+                        console.error('Error loading recently viewed stock', symbol, ':', error);
+                        return {
+                            symbol: symbol,
+                            name: stock.name || 'Error',
+                            currentPrice: 0,
+                            previousClose: 0,
+                            currency: 'USD'
+                        };
+                    });
+            });
+            
+            Promise.all(promises).then(results => {
+                const validResults = results.filter(r => r !== null);
+                console.log('Recently viewed results:', validResults);
+                updateRecentlyViewedSection(validResults);
+            });
         } else {
-            priceElement.textContent = 'N/A';
-            changeElement.textContent = 'N/A';
+            console.log('No recently viewed stocks');
         }
     }
     
-    function updateStockError(entry) {
-        entry.querySelector('.stock-price').textContent = 'Error';
-        entry.querySelector('.stock-change').textContent = 'N/A';
+    function loadPopularStocks() {
+        const popularStocks = <?= json_encode($popularStocks ?? []) ?>;
+        console.log('Popular stocks data:', popularStocks);
+        
+        if (popularStocks && popularStocks.length > 0) {
+            const promises = popularStocks.map(symbol => {
+                // symbol is just a string, not an object
+                console.log('Loading popular stock:', symbol);
+                
+                if (!symbol || typeof symbol !== 'string') {
+                    console.error('Invalid symbol for popular stock:', symbol);
+                    return Promise.resolve(null);
+                }
+                
+                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                    .then(response => {
+                        console.log('Response for popular stock', symbol, ':', response.status);
+                        return response.json();
+                    })
+                    .then(quote => {
+                        console.log('Quote data for popular stock', symbol, ':', quote);
+                        return {
+                            symbol: symbol,
+                            name: quote.name || 'N/A',
+                            currentPrice: quote.currentPrice || 0,
+                            previousClose: quote.previousClose || 0,
+                            currency: quote.currency || 'USD'
+                        };
+                    })
+                    .catch(error => {
+                        console.error('Error loading popular stock', symbol, ':', error);
+                        return {
+                            symbol: symbol,
+                            name: 'Error',
+                            currentPrice: 0,
+                            previousClose: 0,
+                            currency: 'USD'
+                        };
+                    });
+            });
+            
+            Promise.all(promises).then(results => {
+                const validResults = results.filter(r => r !== null);
+                console.log('Popular stocks results:', validResults);
+                updatePopularStocksSection(validResults);
+            });
+        } else {
+            console.log('No popular stocks');
+        }
+    }
+    
+    function loadMarketIndices() {
+        const indices = <?= json_encode($indices ?? []) ?>;
+        console.log('Market indices data:', indices);
+        
+        if (indices && indices.length > 0) {
+            const promises = indices.map(symbol => {
+                // symbol is just a string, not an object
+                console.log('Loading market index:', symbol);
+                
+                if (!symbol || typeof symbol !== 'string') {
+                    console.error('Invalid symbol for market index:', symbol);
+                    return Promise.resolve(null);
+                }
+                
+                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                    .then(response => {
+                        console.log('Response for market index', symbol, ':', response.status);
+                        return response.json();
+                    })
+                    .then(quote => {
+                        console.log('Quote data for market index', symbol, ':', quote);
+                        return {
+                            symbol: symbol,
+                            name: quote.name || 'N/A',
+                            currentPrice: quote.currentPrice || 0,
+                            previousClose: quote.previousClose || 0,
+                            currency: quote.currency || 'USD'
+                        };
+                    })
+                    .catch(error => {
+                        console.error('Error loading market index', symbol, ':', error);
+                        return {
+                            symbol: symbol,
+                            name: 'Error',
+                            currentPrice: 0,
+                            previousClose: 0,
+                            currency: 'USD'
+                        };
+                    });
+            });
+            
+            Promise.all(promises).then(results => {
+                const validResults = results.filter(r => r !== null);
+                console.log('Market indices results:', validResults);
+                updateMarketIndicesSection(validResults);
+            });
+        } else {
+            console.log('No market indices');
+        }
+    }
+    
+    function updateRecentlyViewedSection(stocks) {
+        const container = document.querySelector('#recently-viewed-container');
+        if (!container) {
+            console.log('Recently viewed container not found');
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        stocks.forEach(stock => {
+            const change = stock.currentPrice - stock.previousClose;
+            const changePercent = stock.previousClose ? ((change / stock.previousClose) * 100) : 0;
+            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
+            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+            
+            const stockElement = document.createElement('div');
+            stockElement.style.cssText = `
+                background: #FFF8DC;
+                border: 1px solid #4A4A4A;
+                padding: 15px;
+                margin-bottom: 15px;
+                text-align: center;
+            `;
+            
+            stockElement.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">
+                    <a href="/stock?symbol=${encodeURIComponent(stock.symbol)}" style="color: #4A4A4A; text-decoration: none;">${stock.symbol}</a>
+                </div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                    ${stock.currentPrice.toFixed(2)} ${stock.currency}
+                </div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                    ${stock.name}
+                </div>
+                <div style="color: ${changeColor}; font-weight: bold;">
+                    ${changeText} (${changePercentText})
+                </div>
+            `;
+            
+            container.appendChild(stockElement);
+        });
+    }
+    
+    function updatePopularStocksSection(stocks) {
+        const container = document.querySelector('#popular-stocks-container');
+        if (!container) {
+            console.log('Popular stocks container not found');
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        stocks.forEach(stock => {
+            const change = stock.currentPrice - stock.previousClose;
+            const changePercent = stock.previousClose ? ((change / stock.previousClose) * 100) : 0;
+            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
+            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+            
+            const stockElement = document.createElement('div');
+            stockElement.style.cssText = `
+                background: #FFF8DC;
+                border: 1px solid #4A4A4A;
+                padding: 15px;
+                margin-bottom: 15px;
+                text-align: center;
+            `;
+            
+            stockElement.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">
+                    <a href="/stock?symbol=${encodeURIComponent(stock.symbol)}" style="color: #4A4A4A; text-decoration: none;">${stock.symbol}</a>
+                </div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                    ${stock.currentPrice.toFixed(2)} ${stock.currency}
+                </div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                    ${stock.name}
+                </div>
+                <div style="color: ${changeColor}; font-weight: bold;">
+                    ${changeText} (${changePercentText})
+                </div>
+            `;
+            
+            container.appendChild(stockElement);
+        });
+    }
+    
+    function updateMarketIndicesSection(indices) {
+        const container = document.querySelector('#market-indices-container');
+        if (!container) {
+            console.log('Market indices container not found');
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        indices.forEach(index => {
+            const change = index.currentPrice - index.previousClose;
+            const changePercent = index.previousClose ? ((change / index.previousClose) * 100) : 0;
+            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
+            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+            
+            const indexElement = document.createElement('div');
+            indexElement.style.cssText = `
+                background: #FFF8DC;
+                border: 1px solid #4A4A4A;
+                padding: 15px;
+                margin-bottom: 15px;
+                text-align: center;
+            `;
+            
+            indexElement.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">
+                    <a href="/stock?symbol=${encodeURIComponent(index.symbol)}" style="color: #4A4A4A; text-decoration: none;">${index.symbol}</a>
+                </div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                    ${index.currentPrice.toFixed(2)} ${index.currency}
+                </div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                    ${index.name}
+                </div>
+                <div style="color: ${changeColor}; font-weight: bold;">
+                    ${changeText} (${changePercentText})
+                </div>
+            `;
+            
+            container.appendChild(indexElement);
+        });
     }
 });
 </script>

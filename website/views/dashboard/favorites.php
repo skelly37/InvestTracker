@@ -119,14 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function loadStockData(symbol, row) {
-        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
+        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.info) {
-                    updateRowData(row, data.info, data.history);
-                } else {
-                    updateRowError(row);
-                }
+                updateRowData(row, data);
             })
             .catch(error => {
                 console.error('Error loading stock data for', symbol, ':', error);
@@ -134,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    function updateRowData(row, info, history) {
+    function updateRowData(row, info) {
         row.querySelector('.stock-name').textContent = info.name || 'N/A';
         row.querySelector('.stock-exchange').textContent = info.exchange || 'N/A';
         
@@ -142,28 +138,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const changeElement = row.querySelector('.stock-change');
         
         if (info.currentPrice) {
-            priceElement.textContent = `${info.currency || 'USD'} ${info.currentPrice.toFixed(2)}`;
+            priceElement.textContent = `${info.currentPrice.toFixed(2)}`;
             
-            // Calculate change from history if available
-            if (history && Object.keys(history).length > 1) {
-                const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
-                const prices = timestamps.map(t => history[t]);
+            // Calculate change from currentPrice to previousClose
+            if (info.previousClose) {
+                const change = info.currentPrice - info.previousClose;
+                const changePercent = ((change / info.previousClose) * 100);
                 
-                if (prices.length >= 2) {
-                    const currentPrice = info.currentPrice;
-                    const previousPrice = prices[0];
-                    
-                    const change = currentPrice - previousPrice;
-                    const changePercent = ((change / previousPrice) * 100);
-                    
-                    const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-                    const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-                    const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
-                    
-                    changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
-                } else {
-                    changeElement.textContent = 'N/A';
-                }
+                const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+                const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
+                
+                changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
             } else {
                 changeElement.textContent = 'N/A';
             }

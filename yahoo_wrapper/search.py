@@ -7,21 +7,6 @@ from typing import (
 
 import yfinance as yf
 
-from .ticker import *
-
-
-@dataclass(frozen=True)
-class Quote:
-    info: TickerInfo
-    history: Dict[datetime, float]
-
-
-    @staticmethod
-    def fromSymbol(symbol: str) -> 'Quote':
-        ticker = yf.Ticker(symbol)
-
-        return Quote(info=get_info(ticker), history=get_history(ticker))
-
 
 @dataclass(frozen=True)
 class SearchResult:
