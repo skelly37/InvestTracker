@@ -232,7 +232,11 @@ function deleteUser(userId, username) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                alert(data.message || 'User deleted successfully');
             } else {
                 alert(data.message || 'Failed to delete user');
             }
@@ -243,9 +247,7 @@ function deleteUser(userId, username) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('addUserBtn').addEventListener('click', openAddUserModal);
-});
+document.getElementById('addUserBtn').addEventListener('click', openAddUserModal);
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

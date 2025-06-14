@@ -139,7 +139,7 @@ class UserController extends BaseController {
         }
         
         try {
-            if ($this->user->delete($userId)) {
+            if ($this->user->deleteUser($userId)) {
                 $this->json(['success' => true, 'message' => 'User deleted successfully']);
             } else {
                 $this->json(['success' => false, 'message' => 'Failed to delete user'], 500);
