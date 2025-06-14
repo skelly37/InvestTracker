@@ -10,17 +10,8 @@ class DashboardController extends BaseController {
             // Get user's recently viewed stocks
             $recentlyViewed = $this->stock->getRecentlyViewed($userId, 5);
             
-            // Get popular stocks with biggest changes
+            // Get popular stocks
             $popularStocks = $this->stock->getPopularStocks();
-            
-            // Sort by change percentage for "biggest changes"
-            $biggestChanges = $popularStocks;
-            usort($biggestChanges, function($a, $b) {
-                $changeA = $a['data']['change_percent'] ?? 0;
-                $changeB = $b['data']['change_percent'] ?? 0;
-                return abs($changeB) <=> abs($changeA);
-            });
-            $biggestChanges = array_slice($biggestChanges, 0, 5);
             
             // Get market indices
             $indices = $this->stock->getMarketIndices();
@@ -29,7 +20,6 @@ class DashboardController extends BaseController {
                 'title' => 'Dashboard - InvestTracker',
                 'recentlyViewed' => $recentlyViewed,
                 'popularStocks' => array_slice($popularStocks, 0, 5),
-                'biggestChanges' => $biggestChanges,
                 'indices' => $indices
             ]);
             
@@ -40,7 +30,6 @@ class DashboardController extends BaseController {
                 'title' => 'Dashboard - InvestTracker',
                 'recentlyViewed' => [],
                 'popularStocks' => [],
-                'biggestChanges' => [],
                 'indices' => [],
                 'error' => 'Unable to load market data. Please try again later.'
             ]);

@@ -51,18 +51,18 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="divider"></div>
                     
                     <?php if (!empty($popularStocks)): ?>
-                        <?php foreach ($popularStocks as $stock): ?>
+                        <?php foreach ($popularStocks as $symbol): ?>
                             <div class="stock-entry">
                                 <div class="stock__name">
-                                    <a href="/stock?symbol=<?= urlencode($stock['symbol']) ?>">
-                                        <?= htmlspecialchars($stock['data']['name'] ?? $stock['symbol']) ?>
+                                    <a href="/stock?symbol=<?= urlencode($symbol) ?>">
+                                        <?= htmlspecialchars($symbol) ?>
                                     </a>
                                 </div>
                                 <div class="stock__price">
-                                    <?= formatPrice($stock['data']['price'] ?? null) ?>
+                                    N/A
                                 </div>
                                 <div class="stock__change">
-                                    <?= formatChange($stock['data']['change'] ?? null, $stock['data']['change_percent'] ?? null) ?>
+                                    N/A
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -71,58 +71,30 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <?php endif; ?>
                 </div>
                 
-                <!-- Biggest Changes -->
+                <!-- Market Indices -->
                 <div class="dashboard-column">
-                    <div class="dashboard-column__title">Biggest Changes</div>
+                    <div class="dashboard-column__title">Market Indices</div>
                     <div class="divider"></div>
                     
-                    <?php if (!empty($biggestChanges)): ?>
-                        <?php foreach ($biggestChanges as $stock): ?>
+                    <?php if (!empty($indices)): ?>
+                        <?php foreach ($indices as $symbol): ?>
                             <div class="stock-entry">
                                 <div class="stock__name">
-                                    <a href="/stock?symbol=<?= urlencode($stock['symbol']) ?>">
-                                        <?= htmlspecialchars($stock['data']['name'] ?? $stock['symbol']) ?>
-                                    </a>
+                                    <?= htmlspecialchars($symbol) ?>
                                 </div>
                                 <div class="stock__price">
-                                    <?= formatPrice($stock['data']['price'] ?? null) ?>
+                                    N/A
                                 </div>
                                 <div class="stock__change">
-                                    <?= formatChange($stock['data']['change'] ?? null, $stock['data']['change_percent'] ?? null) ?>
+                                    N/A
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <p class="text-center">Unable to load market changes</p>
+                        <p class="text-center">Unable to load market indices</p>
                     <?php endif; ?>
                 </div>
             </div>
-            
-            <!-- Market Indices -->
-            <?php if (!empty($indices)): ?>
-                <div class="card mt-3">
-                    <div class="card__header">
-                        <h2 class="card__title">Market Indices</h2>
-                    </div>
-                    <div class="card__body">
-                        <div class="grid grid--cols-auto">
-                            <?php foreach ($indices as $index): ?>
-                                <div class="stock-entry">
-                                    <div class="stock__name">
-                                        <?= htmlspecialchars($index['data']['name'] ?? $index['symbol']) ?>
-                                    </div>
-                                    <div class="stock__price">
-                                        <?= formatPrice($index['data']['price'] ?? null) ?>
-                                    </div>
-                                    <div class="stock__change">
-                                        <?= formatChange($index['data']['change'] ?? null, $index['data']['change_percent'] ?? null) ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>
