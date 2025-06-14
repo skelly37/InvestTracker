@@ -85,21 +85,25 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="settings-section__title">Preferences</div>
                     
                     <div class="form-group">
-                        <label class="label">Dashboard Layout</label>
-                        <select class="input" id="dashboardLayout">
-                            <option value="3-column">3 Column Layout</option>
-                            <option value="2-column">2 Column Layout</option>
-                            <option value="list">List View</option>
+                        <label class="label">Chart Time Interval</label>
+                        <select class="input" id="chartTimeInterval">
+                            <option value="1d">1 Day</option>
+                            <option value="5d">5 Days</option>
+                            <option value="1mo">1 Month</option>
+                            <option value="3mo">3 Months</option>
+                            <option value="1y">1 Year</option>
+                            <option value="5y">5 Years</option>
+                            <option value="max">Maximum</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label class="label">Auto-refresh Data</label>
-                        <select class="input" id="autoRefresh">
-                            <option value="30">Every 30 seconds</option>
-                            <option value="60">Every minute</option>
-                            <option value="300">Every 5 minutes</option>
-                            <option value="0">Disabled</option>
+                        <label class="label">Interval for Price Difference</label>
+                        <select class="input" id="priceDifferenceInterval">
+                            <option value="day-to-day">Day-to-Day</option>
+                            <option value="week-to-week">Week-to-Week</option>
+                            <option value="month-to-month">Month-to-Month</option>
+                            <option value="year-to-year">Year-to-Year</option>
                         </select>
                     </div>
                     
@@ -113,16 +117,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                 <!-- Data Management -->
                 <div class="settings-section">
                     <div class="settings-section__title">Data Management</div>
-                    
-                    <div class="form-group">
-                        <label class="label">Export Your Data</label>
-                        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
-                            Download your favorites and recently viewed stocks as JSON.
-                        </p>
-                        <button type="button" class="btn btn--secondary" id="exportData">
-                            Export Data
-                        </button>
-                    </div>
                     
                     <div class="form-group">
                         <label class="label">Clear Recently Viewed</label>
@@ -157,42 +151,21 @@ require_once __DIR__ . '/../layouts/navigation.php';
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Load preferences from localStorage
-    const dashboardLayout = localStorage.getItem('dashboardLayout') || '3-column';
-    const autoRefresh = localStorage.getItem('autoRefresh') || '60';
+    const chartTimeInterval = localStorage.getItem('chartTimeInterval') || '1mo';
+    const priceDifferenceInterval = localStorage.getItem('priceDifferenceInterval') || 'day-to-day';
     
-    document.getElementById('dashboardLayout').value = dashboardLayout;
-    document.getElementById('autoRefresh').value = autoRefresh;
+    document.getElementById('chartTimeInterval').value = chartTimeInterval;
+    document.getElementById('priceDifferenceInterval').value = priceDifferenceInterval;
     
     // Save preferences
     document.getElementById('savePreferences').addEventListener('click', function() {
-        const layout = document.getElementById('dashboardLayout').value;
-        const refresh = document.getElementById('autoRefresh').value;
+        const chartInterval = document.getElementById('chartTimeInterval').value;
+        const priceInterval = document.getElementById('priceDifferenceInterval').value;
         
-        localStorage.setItem('dashboardLayout', layout);
-        localStorage.setItem('autoRefresh', refresh);
+        localStorage.setItem('chartTimeInterval', chartInterval);
+        localStorage.setItem('priceDifferenceInterval', priceInterval);
         
         alert('Preferences saved successfully!');
-    });
-    
-    // Export data
-    document.getElementById('exportData').addEventListener('click', function() {
-        // This would typically make an API call to get user data
-        const userData = {
-            exported_at: new Date().toISOString(),
-            user_id: <?= Session::getUserId() ?>,
-            username: '<?= htmlspecialchars($user['username']) ?>',
-            message: 'Data export functionality would be implemented here'
-        };
-        
-        const blob = new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'investtracker-data.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
     });
     
     // Clear recent history
