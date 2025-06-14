@@ -197,12 +197,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Clear recent history
     document.getElementById('clearRecent').addEventListener('click', function() {
-        if (confirm('Are you sure you want to clear your recent viewing history?')) {
-            // This would make an API call to clear recent history
-            alert('Recent history cleared! (This would be implemented in the backend)');
+        if (confirm('Are you sure you want to clear your recent history? This action cannot be undone.')) {
+            const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
+
+            fetch('/dashboard/clear-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `csrf_token=${encodeURIComponent(csrfToken)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to clear recent history'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to clear recent history');
+            });
         }
     });
-    
+
     // Delete account
     document.getElementById('deleteAccount').addEventListener('click', function() {
         const confirmation = prompt('Type "DELETE" to confirm account deletion:');

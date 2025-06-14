@@ -253,4 +253,15 @@ class Stock {
             '^RUT'   // Russell 2000
         ];
     }
+
+    public function clearRecentHistory(int $userId): bool {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM recently_viewed WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            return true;
+        } catch (PDOException $e) {
+            error_log("Error clearing recent history: " . $e->getMessage());
+            return false;
+        }
+    }
 }

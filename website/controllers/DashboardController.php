@@ -127,4 +127,24 @@ class DashboardController extends BaseController {
             'flashMessage' => Session::getFlash('message')
         ]);
     }
+
+    public function clearRecentHistory(): void {
+        $this->requireAuth();
+
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+        }
+
+        $userId = Session::getUserId();
+
+        if ($this->stock->clearRecentHistory($userId)) {
+            $this->json(['success' => true, 'message' => 'Recent history cleared successfully']);
+        } else {
+            $this->json(['success' => false, 'message' => 'Failed to clear recent history'], 500);
+        }
+    }
 }

@@ -50,6 +50,7 @@ $routes = [
         '/users/update-role' => ['UserController', 'updateRole'],
         '/users/toggle-active' => ['UserController', 'toggleActive'],
         '/users/delete' => ['UserController', 'delete'],
+        '/dashboard/clear-history' => ['DashboardController', 'clearRecentHistory'],
     ]
 ];
 
