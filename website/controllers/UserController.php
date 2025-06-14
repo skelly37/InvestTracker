@@ -30,10 +30,12 @@ class UserController extends BaseController {
         
         if (!$this->isPost()) {
             $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
         }
         
         if (!$this->validateCSRF()) {
             $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
         }
         
         $input = $this->sanitizeInput($_POST);
@@ -41,16 +43,27 @@ class UserController extends BaseController {
         
         if ($userId <= 0) {
             $this->json(['success' => false, 'message' => 'Invalid user ID'], 400);
+            return;
         }
         
         // Prevent admin from deactivating themselves
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot deactivate your own account'], 400);
+            return;
         }
         
         try {
-            if ($this->user->toggleActive($userId)) {
-                $this->json(['success' => true, 'message' => 'User status updated successfully']);
+            $result = $this->user->toggleActive($userId);
+            
+            if ($result) {
+                // Pobierz nowy status z bazy
+                $newStatus = $this->user->isActive($userId);
+                
+                $this->json([
+                    'success' => true,
+                    'message' => 'User status updated successfully',
+                    'active' => $newStatus
+                ]);
             } else {
                 $this->json(['success' => false, 'message' => 'Failed to update user status'], 500);
             }
@@ -65,10 +78,12 @@ class UserController extends BaseController {
         
         if (!$this->isPost()) {
             $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
         }
         
         if (!$this->validateCSRF()) {
             $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
         }
         
         $input = $this->sanitizeInput($_POST);
@@ -77,16 +92,19 @@ class UserController extends BaseController {
         
         if ($userId <= 0) {
             $this->json(['success' => false, 'message' => 'Invalid user ID'], 400);
+            return;
         }
         
         $validRoles = ['user', 'admin'];
         if (!in_array($role, $validRoles)) {
             $this->json(['success' => false, 'message' => 'Invalid role'], 400);
+            return;
         }
         
         // Prevent admin from changing their own role
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot change your own role'], 400);
+            return;
         }
         
         try {
@@ -106,10 +124,12 @@ class UserController extends BaseController {
         
         if (!$this->isPost()) {
             $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
         }
         
         if (!$this->validateCSRF()) {
             $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
         }
         
         $input = $this->sanitizeInput($_POST);
@@ -117,11 +137,13 @@ class UserController extends BaseController {
         
         if ($userId <= 0) {
             $this->json(['success' => false, 'message' => 'Invalid user ID'], 400);
+            return;
         }
         
         // Prevent admin from deleting themselves
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot delete your own account'], 400);
+            return;
         }
         
         try {
@@ -141,10 +163,12 @@ class UserController extends BaseController {
         
         if (!$this->isPost()) {
             $this->redirect('/users');
+            return;
         }
         
         if (!$this->validateCSRF()) {
             $this->redirect('/users', 'Invalid security token. Please try again.');
+            return;
         }
         
         $input = $this->sanitizeInput($_POST);
@@ -162,6 +186,7 @@ class UserController extends BaseController {
                 $errors[] = $fieldErrors[0];
             }
             $this->redirect('/users', 'Validation errors: ' . implode(', ', $errors));
+            return;
         }
         
         try {

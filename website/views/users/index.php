@@ -258,7 +258,15 @@ function updateUserRole(userId, newRole) {
 }
 
 function toggleUserActive(userId) {
+    const button = event.target; // Pobierz przycisk który został kliknięty
+    const row = button.closest('tr');
+    const statusSpan = row.querySelector('.user-status');
+    
     if (confirm('Toggle user active status?')) {
+        // Wyłącz przycisk podczas requestu
+        button.disabled = true;
+        button.textContent = 'Processing...';
+        
         fetch('/users/toggle-active', {
             method: 'POST',
             headers: {
@@ -269,14 +277,35 @@ function toggleUserActive(userId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                // Aktualizuj UI na podstawie odpowiedzi z serwera
+                const newStatus = data.active; // Załóżmy że serwer zwraca nowy status
+                
+                // Aktualizuj status badge
+                statusSpan.textContent = newStatus ? 'Active' : 'Inactive';
+                statusSpan.className = `user-status user-status--${newStatus ? 'active' : 'inactive'}`;
+                
+                // Aktualizuj przycisk
+                button.textContent = newStatus ? 'Deactivate' : 'Activate';
+                button.disabled = false;
+                
+                // Pokaż komunikat sukcesu
+                if (window.InvestTracker && window.InvestTracker.showNotification) {
+                    window.InvestTracker.showNotification(
+                        `User ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+                        'success'
+                    );
+                }
             } else {
                 alert(data.message || 'Failed to update user status');
+                button.disabled = false;
+                button.textContent = statusSpan.textContent === 'Active' ? 'Deactivate' : 'Activate';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('Failed to update user status');
+            button.disabled = false;
+            button.textContent = statusSpan.textContent === 'Active' ? 'Deactivate' : 'Activate';
         });
     }
 }

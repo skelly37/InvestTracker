@@ -17,7 +17,7 @@ class User {
                 $updateStmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
                 $updateStmt->execute([$user['id']]);
 
-                return $user; // Zwracaj pełne dane użytkownika
+                return $user;
             }
 
             return null;
@@ -27,19 +27,21 @@ class User {
         }
     }
     
-    public function register($username, $password) {
+    public function register($username, $password, $role = 'user') {
         try {
             // Sprawdź czy username już istnieje
             $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
             $stmt->execute([$username]);
             if ($stmt->fetch()) {
-                return false; // Username już istnieje
+                return false;
             }
             
-            // Utwórz nowego użytkownika
+            // Utwórz nowego użytkownika z domyślnym statusem aktywny
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $this->db->prepare("INSERT INTO users (username, password, role, created_at) VALUES (?, ?, 'user', NOW())");
-            return $stmt->execute([$username, $hashedPassword]);
+            $stmt = $this->db->prepare("INSERT INTO users (username, password, role, active, created_at) VALUES (?, ?, ?, 1, NOW())");
+            $result = $stmt->execute([$username, $hashedPassword, $role]);
+            
+            return $result ? $this->db->lastInsertId() : false;
             
         } catch (PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
@@ -49,7 +51,6 @@ class User {
     
     public function changePassword($userId, $currentPassword, $newPassword) {
         try {
-            // Sprawdź obecne hasło
             $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -58,7 +59,6 @@ class User {
                 return false;
             }
             
-            // Zaktualizuj hasło
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $updateStmt = $this->db->prepare("UPDATE users SET password = ? WHERE id = ?");
             return $updateStmt->execute([$hashedPassword, $userId]);
@@ -82,7 +82,7 @@ class User {
     
     public function getAllUsers() {
         try {
-            $stmt = $this->db->query("SELECT * FROM users ORDER BY created_at DESC");
+            $stmt = $this->db->query("SELECT id, username, role, active, created_at, last_login FROM users ORDER BY created_at DESC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Get all users error: " . $e->getMessage());
@@ -107,6 +107,20 @@ class User {
         } catch (PDOException $e) {
             error_log("Toggle active error: " . $e->getMessage());
             return false;
+        }
+    }
+
+    public function isActive(int $userId): bool {
+        try {
+            // Poprawka: używamy $this->db zamiast $this->pdo
+            $stmt = $this->db->prepare("SELECT active FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Domyślnie true jeśli brak rekordu lub null
+            return (bool)($result['is_active'] ?? 1);
+        } catch (PDOException $e) {
+            error_log("Get user active status error: " . $e->getMessage());
+            return true;
         }
     }
     
