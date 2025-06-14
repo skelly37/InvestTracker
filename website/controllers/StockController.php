@@ -15,7 +15,6 @@ class StockController extends BaseController {
                 $results = $this->stock->searchStocks($query);
                 $totalResults = count($results);
                 
-                // Check which results are already in favorites
                 $userId = Session::getUserId();
                 foreach ($results as &$result) {
                     $result['isFavorite'] = $this->stock->isFavorite($userId, $result['symbol']);
@@ -47,13 +46,10 @@ class StockController extends BaseController {
         
         $userId = Session::getUserId();
         
-        // Get user's chart time interval preference
         $chartTimeInterval = $this->user->getChartTimeInterval($userId);
         
-        // Add to recently viewed
         $this->stock->addToRecentlyViewed($userId, $symbol);
         
-        // Check if in favorites
         $isFavorite = $this->stock->isFavorite($userId, $symbol);
         
         $this->view('stock/detail', [
@@ -103,7 +99,6 @@ class StockController extends BaseController {
         try {
             $results = $this->stock->searchStocks($query);
             
-            // Format for autocomplete
             $suggestions = array_map(function($item) {
                 return [
                     'symbol' => $item['symbol'] ?? '',
@@ -132,11 +127,10 @@ class StockController extends BaseController {
         }
         
         try {
-            // ZMIANA: Używamy cache'owanej metody getQuote() zamiast getQuoteFromAPI()
             $data = $this->stock->getQuote($symbol);
             
             if ($data) {
-                $this->json($data); // Return cached or fresh data
+                $this->json($data);
             } else {
                 $this->json(['success' => false, 'message' => 'Stock not found'], 404);
             }

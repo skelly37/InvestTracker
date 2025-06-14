@@ -99,7 +99,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard loading...');
     
-    // Load data for all sections
     loadRecentlyViewed();
     loadPopularStocks();
     loadMarketIndices();
@@ -118,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for recently viewed', symbol, ':', response.status);
@@ -169,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for popular stock', symbol, ':', response.status);
@@ -220,7 +217,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for market index', symbol, ':', response.status);

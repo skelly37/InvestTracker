@@ -161,13 +161,6 @@ function generate_breadcrumbs(array $breadcrumbs): string {
     return $html;
 }
 
-/**
- * Validate stock symbol format
- */
-function is_valid_stock_symbol(string $symbol): bool {
-    // Allow letters, numbers, dots, hyphens, and forward slashes
-    return preg_match('/^[A-Z0-9.\-\/\^]+$/i', $symbol) && strlen($symbol) <= 20;
-}
 
 /**
  * Get market status based on current time
@@ -175,7 +168,7 @@ function is_valid_stock_symbol(string $symbol): bool {
 function get_market_status(): array {
     $now = new DateTime('now', new DateTimeZone('America/New_York'));
     $time = $now->format('H:i');
-    $dayOfWeek = $now->format('N'); // 1 = Monday, 7 = Sunday
+    $dayOfWeek = $now->format('N');
     
     $isWeekend = $dayOfWeek >= 6;
     $isMarketHours = $time >= '09:30' && $time <= '16:00';
@@ -209,9 +202,7 @@ function get_market_status(): array {
     }
 }
 
-/**
- * Generate pagination HTML
- */
+
 function generate_pagination(int $currentPage, int $totalPages, string $baseUrl): string {
     if ($totalPages <= 1) {
         return '';
@@ -220,14 +211,12 @@ function generate_pagination(int $currentPage, int $totalPages, string $baseUrl)
     $html = '<nav class="pagination">';
     $html .= '<ul class="pagination-list">';
     
-    // Previous button
     if ($currentPage > 1) {
         $html .= '<li><a href="' . $baseUrl . '?page=' . ($currentPage - 1) . '" class="pagination-link">‹ Previous</a></li>';
     } else {
         $html .= '<li><span class="pagination-link pagination-link--disabled">‹ Previous</span></li>';
     }
     
-    // Page numbers
     $start = max(1, $currentPage - 2);
     $end = min($totalPages, $currentPage + 2);
     
@@ -253,7 +242,6 @@ function generate_pagination(int $currentPage, int $totalPages, string $baseUrl)
         $html .= '<li><a href="' . $baseUrl . '?page=' . $totalPages . '" class="pagination-link">' . $totalPages . '</a></li>';
     }
     
-    // Next button
     if ($currentPage < $totalPages) {
         $html .= '<li><a href="' . $baseUrl . '?page=' . ($currentPage + 1) . '" class="pagination-link">Next ›</a></li>';
     } else {
@@ -280,17 +268,14 @@ function check_rate_limit(string $key, int $maxRequests = 60, int $timeWindow = 
     $now = time();
     $windowStart = $now - $timeWindow;
     
-    // Remove old entries
     $data = array_filter($data, function($timestamp) use ($windowStart) {
         return $timestamp > $windowStart;
     });
     
-    // Check if limit exceeded
     if (count($data) >= $maxRequests) {
         return false;
     }
     
-    // Add current request
     $data[] = $now;
     file_put_contents($cacheFile, json_encode($data));
     

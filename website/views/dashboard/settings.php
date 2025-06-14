@@ -140,12 +140,10 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load preferences from database
     const chartTimeInterval = '<?= htmlspecialchars($chartTimeInterval ?? "1mo") ?>';
     
     document.getElementById('chartTimeInterval').value = chartTimeInterval;
     
-    // Save preferences
     document.getElementById('savePreferences').addEventListener('click', function() {
         const chartInterval = document.getElementById('chartTimeInterval').value;
         const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
@@ -171,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Clear recent history
     document.getElementById('clearRecent').addEventListener('click', function() {
         if (confirm('Are you sure you want to clear your recent history? This action cannot be undone.')) {
             const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
@@ -198,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Delete account
     document.getElementById('deleteAccount').addEventListener('click', function() {
         const confirmMessage = 'Are you absolutely sure you want to delete your account?\n\n' +
                               'This will permanently delete:\n' +

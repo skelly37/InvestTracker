@@ -65,18 +65,15 @@ class Stock {
     
     public function addToRecentlyViewed($userId, $symbol) {
         try {
-            // Remove if already exists to update timestamp
             $stmt = $this->db->prepare("DELETE FROM recently_viewed WHERE user_id = ? AND symbol = ?");
             $stmt->execute([$userId, $symbol]);
             
-            // Add with current timestamp
             $stmt = $this->db->prepare("
                 INSERT INTO recently_viewed (user_id, symbol, viewed_at) 
                 VALUES (?, ?, NOW())
             ");
             $stmt->execute([$userId, $symbol]);
             
-            // Keep only last 50 entries per user - split into two queries for PostgreSQL compatibility
             $stmt = $this->db->prepare("
                 SELECT id FROM recently_viewed 
                 WHERE user_id = ? 
@@ -117,7 +114,6 @@ class Stock {
     }
     
     public function searchStocks($query) {
-        // First check cache
         $cacheUri = "/search?q=" . urlencode($query);
         $cachedData = $this->getCachedData($cacheUri);
         
@@ -146,7 +142,6 @@ class Stock {
                 throw new Exception("Invalid search response");
             }
             
-            // Cache the results
             $results = $data['results'];
             $this->cacheData($cacheUri, $results);
             error_log("Cache MISS for search: $query - data cached");
@@ -159,7 +154,6 @@ class Stock {
     }
 
     public function getQuote($symbol) {
-        // First check cache
         $cacheUri = "/quote?q=" . urlencode($symbol);
         $cachedData = $this->getCachedData($cacheUri);
         
@@ -198,7 +192,6 @@ class Stock {
     }
 
     public function getHistoricalData($symbol, $interval) {
-        // First check cache
         $cacheUri = "/history?q=" . urlencode($symbol) . "&interval=" . urlencode($interval);
         $cachedData = $this->getCachedData($cacheUri);
         
@@ -277,15 +270,10 @@ class Stock {
     }
     
     public function getPopularStocks() {
-        // Return some default popular stocks
-        return [
-            'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 
-            'META', 'NVDA', 'NFLX', 'ORCL', 'AMD'
-        ];
+        return ['AAPL', 'GOOGL', 'MSFT', 'TSLA'];
     }
     
     public function getMarketIndices() {
-        // Return major market indices
         return [
             '^GSPC', // S&P 500
             '^DJI',  // Dow Jones

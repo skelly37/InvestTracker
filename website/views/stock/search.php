@@ -98,12 +98,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const addButtons = document.querySelectorAll('.add-favorite-btn');
     const removeButtons = document.querySelectorAll('.remove-favorite-btn');
     
-    // Add to favorites
     addButtons.forEach(button => {
         button.addEventListener('click', handleAddFavorite);
     });
     
-    // Remove from favorites
     removeButtons.forEach(button => {
         button.addEventListener('click', handleRemoveFavorite);
     });
@@ -115,7 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Adding to favorites:', symbol);
         
-        // POPRAWKA: Użyj naszego endpointu /stock/quote zamiast bezpośredniego wywołania
         fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
             .then(response => {
                 console.log('Quote response status:', response.status);
@@ -124,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(stockData => {
                 console.log('Quote data received:', stockData);
                 
-                // Potem dodaj do ulubionych
                 return fetch('/dashboard/add-favorite', {
                     method: 'POST',
                     headers: {
@@ -184,28 +180,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function switchToRemoveButton(button) {
-        // Usuń poprzedni event listener
         button.removeEventListener('click', handleAddFavorite);
         
-        // Zmień wygląd i tekst
         button.textContent = '✅ Added';
         button.classList.remove('btn--secondary', 'add-favorite-btn');
         button.classList.add('btn--primary', 'remove-favorite-btn');
         
-        // Dodaj nowy event listener
         button.addEventListener('click', handleRemoveFavorite);
     }
     
     function switchToAddButton(button) {
-        // Usuń poprzedni event listener
         button.removeEventListener('click', handleRemoveFavorite);
         
-        // Zmień wygląd i tekst
         button.textContent = '❤️ Add';
         button.classList.remove('btn--primary', 'remove-favorite-btn');
         button.classList.add('btn--secondary', 'add-favorite-btn');
         
-        // Dodaj nowy event listener
         button.addEventListener('click', handleAddFavorite);
     }
 });

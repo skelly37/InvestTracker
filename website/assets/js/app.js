@@ -35,7 +35,6 @@
         });
         
         searchInput.addEventListener('blur', function() {
-            // Hide autocomplete after a small delay to allow clicks
             setTimeout(hideAutocomplete, 150);
         });
         

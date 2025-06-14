@@ -82,13 +82,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeButtons = document.querySelectorAll('.remove-favorite-btn');
     const favoriteRows = document.querySelectorAll('tr[data-symbol]');
     
-    // Load current data for each favorite
     favoriteRows.forEach(row => {
         const symbol = row.dataset.symbol;
         loadStockData(symbol, row);
     });
     
-    // Remove favorite functionality
     removeButtons.forEach(button => {
         button.addEventListener('click', function() {
             const symbol = this.dataset.symbol;
@@ -119,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function loadStockData(symbol, row) {
-        // ZMIANA: Używamy нашего controllera zamiast прямого API
         fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
             .then(response => response.json())
             .then(data => {
@@ -141,7 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (info.currentPrice) {
             priceElement.textContent = `${info.currentPrice.toFixed(2)}`;
             
-            // Calculate change from currentPrice to previousClose
             if (info.previousClose) {
                 const change = info.currentPrice - info.previousClose;
                 const changePercent = ((change / info.previousClose) * 100);

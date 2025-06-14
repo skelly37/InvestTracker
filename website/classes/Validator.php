@@ -1,6 +1,4 @@
 <?php
-// classes/Validator.php
-
 class Validator {
     private $data;
     private $rules;

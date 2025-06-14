@@ -88,7 +88,6 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <?php 
-// Clean up old session data at the end
 Session::remove('login_old_username');
 Session::remove('register_old_username');
 require_once __DIR__ . '/../layouts/footer.php'; 

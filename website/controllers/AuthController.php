@@ -2,7 +2,6 @@
 class AuthController extends BaseController {
     
     public function showLogin(): void {
-        // Redirect if already logged in
         if (Session::isLoggedIn()) {
             $this->redirect('/dashboard');
         }
@@ -24,14 +23,12 @@ class AuthController extends BaseController {
         
         $input = $this->sanitizeInput($_POST);
         
-        // Validate input
         $validator = Validator::make($input, [
             'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
             'password' => ['required', 'string', ['min', 6]]
         ]);
         
         if (!$validator->validate()) {
-            // Store old input and errors for LOGIN
             foreach ($input as $key => $value) {
                 if ($key !== 'password') {
                     Session::set("login_old_$key", $value);
@@ -46,37 +43,31 @@ class AuthController extends BaseController {
         }
         
         try {
-            // Attempt authentication using login method
             $userData = $this->user->login($input['username'], $input['password']);
 
             if ($userData) {
                 Session::setUser($userData);
 
-                // Clear old input
                 $this->clearOldInput();
 
-                // Redirect to intended page or dashboard
                 $redirectTo = Session::get('intended_url', '/dashboard');
                 Session::remove('intended_url');
 
                 $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
             } else {
-                // Store old input and set error for failed login
                 Session::set('login_old_username', $input['username']);
                 Session::set('login_error_credentials', 'Invalid username or password.');
-                $this->redirect('/login'); // Usuń komunikat z redirect, bo jest już w sesji
+                $this->redirect('/login');
             }
         } catch (Exception $e) {
             if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
-                // Handle inactive account - używaj TYLKO sesji, bez flash message
                 Session::set('login_old_username', $input['username']);
                 Session::set('login_error_credentials', 'Your account is inactive. Please contact the administrator to activate your account.');
-                $this->redirect('/login'); // Usuń komunikat z redirect
+                $this->redirect('/login')
             } else {
-                // Handle other errors
                 Session::set('login_old_username', $input['username']);
                 Session::set('login_error_credentials', 'A technical error occurred. Please try again.');
-                $this->redirect('/login'); // Usuń komunikat z redirect
+                $this->redirect('/login');
             }
         }
     }
@@ -92,7 +83,6 @@ class AuthController extends BaseController {
         
         $input = $this->sanitizeInput($_POST);
         
-        // Validate input (without email for now)
         $validator = Validator::make($input, [
             'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
             'password' => ['required', 'string', ['min', 6], ['max', 255]],
@@ -104,28 +94,22 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Please fix the errors below.');
         }
         
-        // Check password confirmation
         if ($input['password'] !== $input['confirm_password']) {
             Session::set('register_old_username', $input['username']);
             Session::set('register_error_confirm_password', 'Passwords do not match.');
             $this->redirect('/login', 'Passwords do not match.');
         }
         
-        // Create user using register method
         $result = $this->user->register($input['username'], $input['password']);
         
-        // Handle different registration results
         if (is_numeric($result) && $result > 0) {
-            // Success - user created, $result is the new user ID
             $this->clearOldInput();
             $this->redirect('/login', 'Account created successfully. Please login.');
         } elseif ($result === 'USER_EXISTS') {
-            // Username already exists
             Session::set('register_old_username', $input['username']);
             Session::set('register_error_username', 'Username already exists. Please choose a different one.');
             $this->redirect('/login', 'Username already exists. Please choose a different one.');
         } else {
-            // Database error or other failure
             Session::set('register_old_username', $input['username']);
             error_log("Registration failed for username: " . $input['username'] . ", result: " . var_export($result, true));
             $this->redirect('/login', 'Registration failed due to a technical error. Please try again.');
@@ -151,7 +135,6 @@ class AuthController extends BaseController {
         $input = $this->sanitizeInput($_POST);
         $userId = Session::getUserId();
         
-        // Validate input
         $validator = Validator::make($input, [
             'current_password' => ['required', 'string'],
             'new_password' => ['required', 'string', ['min', 6], ['max', 255]],
@@ -163,13 +146,11 @@ class AuthController extends BaseController {
             $this->redirect('/settings', 'Please fix the errors below.');
         }
         
-        // Check password confirmation
         if ($input['new_password'] !== $input['confirm_password']) {
             Session::set('error_confirm_password', 'Passwords do not match.');
             $this->redirect('/settings', 'Passwords do not match.');
         }
         
-        // Change password using changePassword method
         $result = $this->user->changePassword($userId, $input['current_password'], $input['new_password']);
         
         if ($result) {
@@ -181,41 +162,34 @@ class AuthController extends BaseController {
     }
     
     private function handleValidationErrors(Validator $validator, array $input): void {
-        // Store old input (except passwords)
         foreach ($input as $key => $value) {
             if (!str_contains($key, 'password')) {
                 Session::set("old_$key", $value);
             }
         }
         
-        // Store errors
         foreach ($validator->getErrors() as $field => $errors) {
             Session::set("error_$field", $errors[0]);
         }
     }
     
     private function handleRegistrationValidationErrors(Validator $validator, array $input): void {
-        // Store old input for REGISTRATION (except passwords)
         foreach ($input as $key => $value) {
             if (!str_contains($key, 'password')) {
                 Session::set("register_old_$key", $value);
             }
         }
         
-        // Store errors for REGISTRATION
         foreach ($validator->getErrors() as $field => $errors) {
             Session::set("register_error_$field", $errors[0]);
         }
     }
     
     private function clearOldInput(): void {
-        // Clear LOGIN data
         $loginKeys = ['login_old_username', 'login_error_username', 'login_error_password', 'login_error_credentials'];
         
-        // Clear REGISTRATION data
         $registerKeys = ['register_old_username', 'register_error_username', 'register_error_password', 'register_error_confirm_password'];
         
-        // Clear SETTINGS data
         $settingsKeys = ['old_username', 'error_username', 'error_password', 'error_confirm_password', 'error_current_password', 'error_new_password'];
         
         $allKeys = array_merge($loginKeys, $registerKeys, $settingsKeys);
@@ -241,11 +215,9 @@ class AuthController extends BaseController {
         $userId = Session::getUserId();
 
         try {
-            // Delete user account
             $result = $this->user->deleteUser($userId);
 
             if ($result) {
-                // Logout user after successful deletion
                 Session::logout();
                 $this->json(['success' => true, 'message' => 'Account deleted successfully', 'redirect' => '/login']);
             } else {

@@ -168,13 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentChart = null;
     let currentInterval = defaultInterval;
     
-    // Set default interval
     intervalSelector.value = defaultInterval;
     
-    // Load initial stock data
     loadStockData(symbol, currentInterval);
     
-    // Interval selector change handler
     intervalSelector.addEventListener('change', function() {
         const newInterval = this.value;
         if (newInterval !== currentInterval) {
@@ -183,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Favorite button functionality
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             const action = this.dataset.action;
@@ -229,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Load data")
         
         Promise.all([
-            // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
             fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`).then(response => response.json()),
             fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`).then(response => response.json())
         ])
@@ -260,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     showChartLoading(true);
     
-    // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
     fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(currentInterval)}`)
         .then(response => response.json())
         .then(historyData => {
@@ -350,7 +344,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentChart.destroy();
     }
     
-    // POPRAWKA: Wyciągnij właściwe dane z odpowiedzi
     let actualData = historyData;
     if (historyData && historyData.success && historyData.data) {
         actualData = historyData.data;
@@ -362,14 +355,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Timestamps count:', timestamps.length);
     console.log('Prices count:', prices.length);
     
-    // Check if we have valid data
     if (timestamps.length === 0 || prices.length === 0) {
         console.error('No valid chart data available');
         showChartError(true);
         return;
     }
     
-    // Format labels based on current interval
     const labels = timestamps.map(timestamp => {
         const date = new Date(parseInt(timestamp) * 1000);
         console.log('Processing timestamp:', timestamp, 'date:', date);
@@ -377,35 +368,34 @@ document.addEventListener('DOMContentLoaded', function() {
         let formattedLabel = '';
         
         if (currentInterval === '1d') {
-            // Format: 14:30
+            // 14:30
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             formattedLabel = `${hours}:${minutes}`;
         } else if (currentInterval === '5d') {
-            // Format: 13/01 14:30
+            // 13/01 14:30
             const day5d = String(date.getDate()).padStart(2, '0');
             const month5d = String(date.getMonth() + 1).padStart(2, '0');
             const hours5d = String(date.getHours()).padStart(2, '0');
             const minutes5d = String(date.getMinutes()).padStart(2, '0');
             formattedLabel = `${day5d}/${month5d} ${hours5d}:${minutes5d}`;
         } else if (currentInterval === '1mo') {
-            // Format: 13/01
+            // 13/01
             const day1mo = String(date.getDate()).padStart(2, '0');
             const month1mo = String(date.getMonth() + 1).padStart(2, '0');
             formattedLabel = `${day1mo}/${month1mo}`;
         } else if (currentInterval === '3mo') {
-            // Format: 13/01 2024
+            // 13/01 2024
             const day3mo = String(date.getDate()).padStart(2, '0');
             const month3mo = String(date.getMonth() + 1).padStart(2, '0');
             const year3mo = date.getFullYear();
             formattedLabel = `${day3mo}/${month3mo} ${year3mo}`;
         } else if (currentInterval === '1y' || currentInterval === '5y' || currentInterval === 'max') {
-            // Format: 01 2024
+            // 01 2024
             const monthLong = String(date.getMonth() + 1).padStart(2, '0');
             const yearLong = date.getFullYear();
             formattedLabel = `${monthLong} ${yearLong}`;
         } else {
-            // Fallback
             const dayDefault = String(date.getDate()).padStart(2, '0');
             const monthDefault = String(date.getMonth() + 1).padStart(2, '0');
             formattedLabel = `${dayDefault}/${monthDefault}`;

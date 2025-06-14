@@ -7,13 +7,8 @@ class DashboardController extends BaseController {
         $userId = Session::getUserId();
         
         try {
-            // Get user's recently viewed stocks
             $recentlyViewed = $this->stock->getRecentlyViewed($userId, 4);
-            
-            // Get popular stocks
             $popularStocks = $this->stock->getPopularStocks();
-            
-            // Get market indices
             $indices = $this->stock->getMarketIndices();
             
             $this->view('dashboard/index', [
@@ -120,7 +115,6 @@ class DashboardController extends BaseController {
         $userId = Session::getUserId();
         $user = $this->user->findById($userId);
         
-        // Get user's chart time interval preference
         $chartTimeInterval = $this->user->getChartTimeInterval($userId);
         
         $this->view('dashboard/settings', [

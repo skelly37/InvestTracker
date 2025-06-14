@@ -1,17 +1,9 @@
 <?php
-/**
- * InvestTracker Application Entry Point
- * 
- * This is the main entry point for the InvestTracker web application.
- * All requests are routed through this file.
- */
 
-// Define application constants
 define('APP_START_TIME', microtime(true));
 define('APP_ROOT', dirname(__DIR__));
 define('PUBLIC_ROOT', __DIR__);
 
-// Set error reporting based on environment
 if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') {
     error_reporting(0);
     ini_set('display_errors', 0);
@@ -22,7 +14,6 @@ if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') {
     define('DEBUG_MODE', true);
 }
 
-// Load environment variables from .env file
 if (file_exists(APP_ROOT . '/.env')) {
     $lines = file(APP_ROOT . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -30,7 +21,6 @@ if (file_exists(APP_ROOT . '/.env')) {
             list($key, $value) = explode('=', $line, 2);
             $_ENV[trim($key)] = trim($value);
             
-            // Also set in $_SERVER for compatibility
             if (!isset($_SERVER[trim($key)])) {
                 $_SERVER[trim($key)] = trim($value);
             }
@@ -38,14 +28,11 @@ if (file_exists(APP_ROOT . '/.env')) {
     }
 }
 
-// Set timezone
 $timezone = $_ENV['TIMEZONE'] ?? 'UTC';
 date_default_timezone_set($timezone);
 
-// Include utility functions
 require_once APP_ROOT . '/includes/functions.php';
 
-// Set custom error handler
 set_error_handler(function($severity, $message, $file, $line) {
     if (!(error_reporting() & $severity)) {
         return false;
@@ -84,7 +71,6 @@ set_error_handler(function($severity, $message, $file, $line) {
     return true;
 });
 
-// Set exception handler
 set_exception_handler(function($exception) {
     $message = $exception->getMessage();
     $file = $exception->getFile();
@@ -108,13 +94,11 @@ set_exception_handler(function($exception) {
     }
 });
 
-// Security headers
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
-// Handle static file requests (for development server)
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $requestUri)) {
     $filePath = PUBLIC_ROOT . $requestUri;
@@ -141,7 +125,6 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $req
         header('Content-Type: ' . $mimeType);
         header('Content-Length: ' . filesize($filePath));
         
-        // Cache headers for static assets
         $maxAge = 86400; // 1 day
         header('Cache-Control: public, max-age=' . $maxAge);
         header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $maxAge) . ' GMT');
@@ -154,12 +137,11 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $req
     }
 }
 
-// Rate limiting for API endpoints
 if (strpos($requestUri, '/api/') === 0 || strpos($requestUri, '/stock/') === 0) {
     $clientIp = get_client_ip();
     $rateLimitKey = 'api_' . $clientIp;
     
-    if (!check_rate_limit($rateLimitKey, 100, 3600)) { // 100 requests per hour
+    if (!check_rate_limit($rateLimitKey, 100, 3600)) {
         http_response_code(429);
         header('Content-Type: application/json');
         echo json_encode([
@@ -170,7 +152,6 @@ if (strpos($requestUri, '/api/') === 0 || strpos($requestUri, '/stock/') === 0) 
     }
 }
 
-// Basic request logging
 if (defined('DEBUG_MODE') && DEBUG_MODE) {
     $logData = [
         'timestamp' => date('Y-m-d H:i:s'),
@@ -183,7 +164,6 @@ if (defined('DEBUG_MODE') && DEBUG_MODE) {
     debug_log($logData, 'REQUEST');
 }
 
-// Load the main application router
 try {
     require_once APP_ROOT . '/router.php';
 } catch (Exception $e) {
@@ -198,7 +178,6 @@ try {
     }
 }
 
-// Log application performance
 if (defined('DEBUG_MODE') && DEBUG_MODE) {
     $executionTime = microtime(true) - APP_START_TIME;
     $memoryUsage = memory_get_peak_usage(true);

@@ -7,10 +7,8 @@ abstract class BaseController {
         $this->user = new User();
         $this->stock = new Stock();
         
-        // Start session
         Session::start();
         
-        // Set timezone safely - require without require_once to get array
         $config = require __DIR__ . '/../config/app.php';
         $timezone = $config['timezone'] ?? 'UTC';
         date_default_timezone_set($timezone);
@@ -40,7 +38,6 @@ abstract class BaseController {
     protected function view(string $view, array $data = []): void {
         extract($data);
         
-        // Global variables for views
         $currentUser = Session::getUser();
         $isLoggedIn = Session::isLoggedIn();
         $isAdmin = Session::isAdmin();
@@ -49,7 +46,6 @@ abstract class BaseController {
             Session::remove('flash_message');
         }
         
-        // Helper functions for views
         $this->loadHelperFunctions();
         
         require_once __DIR__ . "/../views/$view.php";

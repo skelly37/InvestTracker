@@ -261,13 +261,11 @@ function updateUserRole(userId, newRole) {
 }
 
 function toggleUserActive(userId) {
-    // Znajdź elementy UI dla tego użytkownika
     const row = document.querySelector(`tr[data-user-id="${userId}"]`);
     const button = row.querySelector('.toggle-active-btn');
     const statusSpan = row.querySelector('.user-status');
     
     if (confirm('Toggle user active status?')) {
-        // Wyłącz przycisk podczas requestu
         const originalButtonText = button.textContent;
         button.disabled = true;
         button.textContent = 'Processing...';
@@ -287,21 +285,17 @@ function toggleUserActive(userId) {
             console.log('Response data:', data);
             
             if (data.success) {
-                // Aktualizuj UI na podstawie odpowiedzi z serwera
                 const newStatus = data.active;
                 console.log('New status from server:', newStatus);
                 
-                // Aktualizuj status badge
                 statusSpan.textContent = newStatus ? 'Active' : 'Inactive';
                 statusSpan.className = `user-status user-status--${newStatus ? 'active' : 'inactive'}`;
                 statusSpan.setAttribute('data-status', newStatus ? 'active' : 'inactive');
                 
-                // Aktualizuj przycisk
                 button.textContent = newStatus ? 'Deactivate' : 'Activate';
                 button.setAttribute('data-current-status', newStatus ? 'active' : 'inactive');
                 button.disabled = false;
                 
-                // Opcjonalnie: pokaż komunikat sukcesu
                 console.log(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
                 
             } else {
@@ -344,7 +338,6 @@ function deleteUser(userId, username) {
     }
 }
 
-// Add event listener for the Add User button
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addUserBtn').addEventListener('click', openAddUserModal);
 });

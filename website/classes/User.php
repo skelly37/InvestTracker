@@ -13,17 +13,14 @@ class User {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
-                return null; // User not found
+                return null;
             }
 
-            // Check if user is active
             if (!$user['active']) {
-                // You can throw an exception or return a specific value to indicate inactive user
                 throw new Exception('ACCOUNT_INACTIVE');
             }
 
             if (password_verify($password, $user['password'])) {
-                // Update last login
                 $updateStmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
                 $updateStmt->execute([$user['id']]);
 
@@ -33,7 +30,7 @@ class User {
             return null;
         } catch (Exception $e) {
             if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
-                throw $e; // Re-throw to handle in controller
+                throw $e;
             }
             error_log("Login error: " . $e->getMessage());
             return null;
@@ -42,15 +39,12 @@ class User {
     
     public function register($username, $password, $role = 'user') {
         try {
-            // Sprawdź czy username już istnieje
             $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
             $stmt->execute([$username]);
             if ($stmt->fetch()) {
-                // Username już istnieje - zwróć specjalny kod
                 return 'USER_EXISTS';
             }
             
-            // Utwórz nowego użytkownika z domyślnym statusem aktywny
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $this->db->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
             $result = $stmt->execute([$username, $hashedPassword, $role]);
@@ -121,11 +115,9 @@ class User {
     
     public function toggleActive($userId) {
         try {
-            // Najpierw pobierz aktualny status
             $currentStatus = $this->isActive($userId);
             error_log("Toggle active - current status for user $userId: " . ($currentStatus ? 'true' : 'false'));
             
-            // Ustaw przeciwny status
             $newStatus = $currentStatus ? 0 : 1;
             error_log("Toggle active - setting new status to: $newStatus");
             
@@ -156,7 +148,6 @@ class User {
                 return true;
             }
             
-            // Konwertuj na int, potem na bool
             $isActiveValue = isset($result['active']) ? (int)$result['active'] : 1;
             $isActive = $isActiveValue === 1;
             

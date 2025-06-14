@@ -30,8 +30,6 @@ class Session {
     public static function logout(): void {
         self::clearUser();
         self::regenerateId();
-        // Optionally destroy the entire session
-        // self::destroy();
     }
     
     public static function isLoggedIn(): bool {

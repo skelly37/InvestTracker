@@ -46,7 +46,6 @@ class UserController extends BaseController {
             return;
         }
         
-        // Prevent admin from deactivating themselves
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot deactivate your own account'], 400);
             return;
@@ -56,7 +55,6 @@ class UserController extends BaseController {
             $result = $this->user->toggleActive($userId);
             
             if ($result) {
-                // Pobierz nowy status z bazy
                 $newStatus = $this->user->isActive($userId);
                 
                 $this->json([
@@ -101,7 +99,6 @@ class UserController extends BaseController {
             return;
         }
         
-        // Prevent admin from changing their own role
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot change your own role'], 400);
             return;
@@ -140,7 +137,6 @@ class UserController extends BaseController {
             return;
         }
         
-        // Prevent admin from deleting themselves
         if ($userId === Session::getUserId()) {
             $this->json(['success' => false, 'message' => 'You cannot delete your own account'], 400);
             return;
@@ -173,7 +169,6 @@ class UserController extends BaseController {
         
         $input = $this->sanitizeInput($_POST);
         
-        // Validate input
         $validator = Validator::make($input, [
             'username' => ['required', 'string', ['min', 3], ['max', 50], 'username'],
             'password' => ['required', 'string', ['min', 6], ['max', 255]],
