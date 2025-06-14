@@ -102,8 +102,24 @@ class User {
     
     public function toggleActive($userId) {
         try {
-            $stmt = $this->db->prepare("UPDATE users SET active = NOT COALESCE(active, true) WHERE id = ?");
-            return $stmt->execute([$userId]);
+            // Najpierw pobierz aktualny status
+            $currentStatus = $this->isActive($userId);
+            error_log("Toggle active - current status for user $userId: " . ($currentStatus ? 'true' : 'false'));
+            
+            // Ustaw przeciwny status
+            $newStatus = $currentStatus ? 0 : 1;
+            error_log("Toggle active - setting new status to: $newStatus");
+            
+            $stmt = $this->db->prepare("UPDATE users SET active = ? WHERE id = ?");
+            $result = $stmt->execute([$newStatus, $userId]);
+            
+            if ($result) {
+                error_log("Toggle active - update successful");
+            } else {
+                error_log("Toggle active - update failed");
+            }
+            
+            return $result;
         } catch (PDOException $e) {
             error_log("Toggle active error: " . $e->getMessage());
             return false;
@@ -112,12 +128,22 @@ class User {
 
     public function isActive(int $userId): bool {
         try {
-            // Poprawka: używamy $this->db zamiast $this->pdo
             $stmt = $this->db->prepare("SELECT active FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            // Domyślnie true jeśli brak rekordu lub null
-            return (bool)($result['is_active'] ?? 1);
+            
+            if ($result === false) {
+                error_log("isActive - User $userId not found, returning default true");
+                return true;
+            }
+            
+            // Konwertuj na int, potem na bool
+            $isActiveValue = isset($result['active']) ? (int)$result['active'] : 1;
+            $isActive = $isActiveValue === 1;
+            
+            error_log("isActive - userId: $userId, raw value: " . var_export($result['active'], true) . ", converted: " . ($isActive ? 'true' : 'false'));
+            
+            return $isActive;
         } catch (PDOException $e) {
             error_log("Get user active status error: " . $e->getMessage());
             return true;
