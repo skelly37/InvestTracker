@@ -26,18 +26,14 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     
                     <?php if (!empty($recentlyViewed)): ?>
                         <?php foreach ($recentlyViewed as $item): ?>
-                            <div class="stock-entry">
+                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($item['symbol']) ?>">
                                 <div class="stock__name">
                                     <a href="/stock?symbol=<?= urlencode($item['symbol']) ?>">
-                                        <?= htmlspecialchars($item['data']['name'] ?? $item['symbol']) ?>
+                                        <span class="stock-name-text"><?= htmlspecialchars($item['symbol']) ?></span>
                                     </a>
                                 </div>
-                                <div class="stock__price">
-                                    <?= formatPrice($item['data']['price'] ?? null) ?>
-                                </div>
-                                <div class="stock__change">
-                                    <?= formatChange($item['data']['change'] ?? null, $item['data']['change_percent'] ?? null) ?>
-                                </div>
+                                <div class="stock__price stock-price">Loading...</div>
+                                <div class="stock__change stock-change">Loading...</div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -52,18 +48,14 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     
                     <?php if (!empty($popularStocks)): ?>
                         <?php foreach ($popularStocks as $symbol): ?>
-                            <div class="stock-entry">
+                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
                                 <div class="stock__name">
                                     <a href="/stock?symbol=<?= urlencode($symbol) ?>">
-                                        <?= htmlspecialchars($symbol) ?>
+                                        <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
                                     </a>
                                 </div>
-                                <div class="stock__price">
-                                    N/A
-                                </div>
-                                <div class="stock__change">
-                                    N/A
-                                </div>
+                                <div class="stock__price stock-price">Loading...</div>
+                                <div class="stock__change stock-change">Loading...</div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -78,16 +70,12 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     
                     <?php if (!empty($indices)): ?>
                         <?php foreach ($indices as $symbol): ?>
-                            <div class="stock-entry">
+                            <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
                                 <div class="stock__name">
-                                    <?= htmlspecialchars($symbol) ?>
+                                    <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
                                 </div>
-                                <div class="stock__price">
-                                    N/A
-                                </div>
-                                <div class="stock__change">
-                                    N/A
-                                </div>
+                                <div class="stock__price stock-price">Loading...</div>
+                                <div class="stock__change stock-change">Loading...</div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -98,5 +86,80 @@ require_once __DIR__ . '/../layouts/navigation.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stockEntries = document.querySelectorAll('.stock-entry[data-symbol]');
+    
+    // Load current data for each stock
+    stockEntries.forEach(entry => {
+        const symbol = entry.dataset.symbol;
+        loadStockData(symbol, entry);
+    });
+    
+    function loadStockData(symbol, entry) {
+        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.info) {
+                    updateStockEntry(entry, data.info, data.history);
+                } else {
+                    updateStockError(entry);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stock data for', symbol, ':', error);
+                updateStockError(entry);
+            });
+    }
+    
+    function updateStockEntry(entry, info, history) {
+        // Update name if we got a full name
+        const nameElement = entry.querySelector('.stock-name-text');
+        if (info.name && nameElement) {
+            nameElement.textContent = info.name;
+        }
+        
+        const priceElement = entry.querySelector('.stock-price');
+        const changeElement = entry.querySelector('.stock-change');
+        
+        if (info.currentPrice) {
+            priceElement.textContent = `${info.currency || 'USD'} ${info.currentPrice.toFixed(2)}`;
+            
+            // Calculate change from history if available
+            if (history && Object.keys(history).length > 1) {
+                const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
+                const prices = timestamps.map(t => history[t]);
+                
+                if (prices.length >= 2) {
+                    const currentPrice = info.currentPrice;
+                    const previousPrice = prices[0];
+                    
+                    const change = currentPrice - previousPrice;
+                    const changePercent = ((change / previousPrice) * 100);
+                    
+                    const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                    const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+                    const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
+                    
+                    changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
+                } else {
+                    changeElement.textContent = 'N/A';
+                }
+            } else {
+                changeElement.textContent = 'N/A';
+            }
+        } else {
+            priceElement.textContent = 'N/A';
+            changeElement.textContent = 'N/A';
+        }
+    }
+    
+    function updateStockError(entry) {
+        entry.querySelector('.stock-price').textContent = 'Error';
+        entry.querySelector('.stock-change').textContent = 'N/A';
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
