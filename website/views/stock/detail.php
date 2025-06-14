@@ -43,6 +43,20 @@ require_once __DIR__ . '/../layouts/navigation.php';
             
             <!-- Chart Section -->
             <div class="chart-section">
+                <!-- Time Interval Selector -->
+                <div class="chart-controls mb-3">
+                    <label class="label">Chart Time Interval:</label>
+                    <select class="input" id="chartTimeInterval" style="width: 200px; display: inline-block;">
+                        <option value="1d">1 Day</option>
+                        <option value="5d">5 Days</option>
+                        <option value="1mo">1 Month</option>
+                        <option value="3mo">3 Months</option>
+                        <option value="1y">1 Year</option>
+                        <option value="5y">5 Years</option>
+                        <option value="max">Maximum</option>
+                    </select>
+                </div>
+                
                 <div class="chart-container">
                     <canvas id="priceChart" width="800" height="400"></canvas>
                     <div id="chartLoading" class="text-center mt-3">
@@ -54,6 +68,9 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                 </div>
             </div>
+
+
+
             
             <!-- Analysis Sections -->
             <div class="analysis-grid">
@@ -121,14 +138,50 @@ require_once __DIR__ . '/../layouts/navigation.php';
     </div>
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+
+    let currentSymbol = '<?= htmlspecialchars($symbol) ?>';
+    let currentStockInfo = null;
+
+
+    console.log('Current symbol:', currentSymbol);
+
+
 document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded');
+        console.log('Chart.js available:', typeof Chart !== 'undefined');
+
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded!');
+            return;
+        }
+
+
     const symbol = '<?= htmlspecialchars($symbol) ?>';
     const favoriteBtn = document.querySelector('.favorite-btn');
+    const intervalSelector = document.getElementById('chartTimeInterval');
+    const defaultInterval = '<?= htmlspecialchars($chartTimeInterval ?? "1mo") ?>';
     
-    // Load stock data
-    loadStockData(symbol);
+    let currentChart = null;
+    let currentInterval = defaultInterval;
+    
+    // Set default interval
+    intervalSelector.value = defaultInterval;
+    
+    // Load initial stock data
+    loadStockData(symbol, currentInterval);
+    
+    // Interval selector change handler
+    intervalSelector.addEventListener('change', function() {
+        const newInterval = this.value;
+        if (newInterval !== currentInterval) {
+            currentInterval = newInterval;
+            loadChartData(symbol, newInterval);
+        }
+    });
     
     // Favorite button functionality
     if (favoriteBtn) {
@@ -170,66 +223,108 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-function loadStockData(symbol) {
-    const chartInterval = '<?= htmlspecialchars($chartTimeInterval ?? "1mo") ?>';
-    
-    // Load both quote and history data from your Flask server
-    Promise.all([
-        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`).then(response => response.json()),
-        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(chartInterval)}`).then(response => response.json())
-    ])
-    .then(([quoteData, historyData]) => {
-        updateStockInfo(quoteData, historyData);
-        loadChart({ info: quoteData, history: historyData });
-        document.getElementById('chartLoading').classList.add('hidden');
-    })
-    .catch(error => {
-        console.error('Error loading stock data:', error);
-        document.getElementById('chartLoading').classList.add('hidden');
-        document.getElementById('chartError').classList.remove('hidden');
-        
-        // Update UI with error state
-        document.getElementById('stockName').textContent = 'Error loading data';
-        document.getElementById('stockPrice').textContent = 'N/A';
-        document.getElementById('stockChange').textContent = 'N/A';
-    });
-}
+    function loadStockData(symbol, interval) {
+        showChartLoading(true);
 
-function updateStockInfo(info, history) {
-    document.getElementById('stockName').textContent = info.name || 'N/A';
-    document.getElementById('stockPrice').textContent = info.currentPrice?.toFixed(2) || 'N/A';
-    document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-    
-    // Calculate price change from currentPrice to previousClose
-    if (info.currentPrice && info.previousClose) {
-        const change = info.currentPrice - info.previousClose;
-        const changePercent = ((change / info.previousClose) * 100);
+        console.log("Load data")
         
-        const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-        const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-        
-        document.getElementById('stockChange').innerHTML = 
-            `<span style="color: ${change >= 0 ? 'green' : 'red'}">${changeText} (${changePercentText})</span>`;
+        Promise.all([
+            fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`).then(response => response.json()),
+            fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`).then(response => response.json())
+        ])
+        .then(([quoteData, historyData]) => {
+            updateStockInfo(quoteData);
+            loadChart(historyData, quoteData);
+            showChartLoading(false);
+        })
+        .catch(error => {
+            console.error('Error loading stock data:', error);
+            showChartLoading(false);
+            showChartError(true);
+            
+            document.getElementById('stockName').textContent = 'Error loading data';
+            document.getElementById('stockPrice').textContent = 'N/A';
+            document.getElementById('stockChange').textContent = 'N/A';
+        });
     }
     
-    // Update Price Information section
-    document.getElementById('previousClose').textContent = info.previousClose?.toFixed(2) || 'N/A';
-    document.getElementById('openPrice').textContent = info.openPrice?.toFixed(2) || 'N/A';
-    document.getElementById('exchange').textContent = info.exchange || 'N/A';
-    document.getElementById('currency').textContent = info.currency || 'N/A';
+    function loadChartData(symbol, interval) {
+            console.log('=== loadChartData called ===');
+            console.log('interval parameter:', interval);
+            console.log('currentSymbol:', currentSymbol);
+            console.log('currentStockInfo:', currentStockInfo);
+
+
+
+        showChartLoading(true);
+        
+        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`)
+            .then(response => response.json())
+            .then(historyData => {
+                const currentInfo = { currency: document.getElementById('currency').textContent || 'USD' };
+                loadChart(historyData, currentInfo);
+                showChartLoading(false);
+            })
+            .catch(error => {
+                console.error('Error loading chart data:', error);
+                showChartLoading(false);
+                showChartError(true);
+            });
+    }
     
-    // Update other sections
-    document.getElementById('priceToBook').textContent = info.priceToBook?.toFixed(2) || 'N/A';
-    document.getElementById('returnOnAssets').textContent = info.returnOnAssets ? (info.returnOnAssets * 100).toFixed(2) + '%' : 'N/A';
-    document.getElementById('returnOnEquity').textContent = info.returnOnEquity ? (info.returnOnEquity * 100).toFixed(2) + '%' : 'N/A';
-    document.getElementById('enterpriseToEbitda').textContent = info.enterpriseToEbitda?.toFixed(2) || 'N/A';
+    function showChartLoading(show) {
+        const loadingEl = document.getElementById('chartLoading');
+        const errorEl = document.getElementById('chartError');
+        
+        if (show) {
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+        } else {
+            loadingEl.classList.add('hidden');
+        }
+    }
     
-    document.getElementById('marketCap').textContent = info.marketCap ? formatLargeNumber(info.marketCap) : 'N/A';
-    document.getElementById('sharesOutstanding').textContent = info.sharesOutstanding ? formatLargeNumber(info.sharesOutstanding) : 'N/A';
-    document.getElementById('totalRevenue').textContent = info.totalRevenue ? formatLargeNumber(info.totalRevenue) : 'N/A';
-    document.getElementById('financialCurrency').textContent = info.financialCurrency || 'N/A';
-}
-    
+    function showChartError(show) {
+        const errorEl = document.getElementById('chartError');
+        if (show) {
+            errorEl.classList.remove('hidden');
+        } else {
+            errorEl.classList.add('hidden');
+        }
+    }
+
+    function updateStockInfo(info) {
+        document.getElementById('stockName').textContent = info.name || 'N/A';
+        document.getElementById('stockPrice').textContent = info.currentPrice?.toFixed(2) || 'N/A';
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        
+        if (info.currentPrice && info.previousClose) {
+            const change = info.currentPrice - info.previousClose;
+            const changePercent = ((change / info.previousClose) * 100);
+            
+            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+            
+            document.getElementById('stockChange').innerHTML = 
+                `<span style="color: ${change >= 0 ? 'green' : 'red'}">${changeText} (${changePercentText})</span>`;
+        }
+        
+        document.getElementById('previousClose').textContent = info.previousClose?.toFixed(2) || 'N/A';
+        document.getElementById('openPrice').textContent = info.openPrice?.toFixed(2) || 'N/A';
+        document.getElementById('exchange').textContent = info.exchange || 'N/A';
+        document.getElementById('currency').textContent = info.currency || 'N/A';
+        
+        document.getElementById('priceToBook').textContent = info.priceToBook?.toFixed(2) || 'N/A';
+        document.getElementById('returnOnAssets').textContent = info.returnOnAssets ? (info.returnOnAssets * 100).toFixed(2) + '%' : 'N/A';
+        document.getElementById('returnOnEquity').textContent = info.returnOnEquity ? (info.returnOnEquity * 100).toFixed(2) + '%' : 'N/A';
+        document.getElementById('enterpriseToEbitda').textContent = info.enterpriseToEbitda?.toFixed(2) || 'N/A';
+        
+        document.getElementById('marketCap').textContent = info.marketCap ? formatLargeNumber(info.marketCap) : 'N/A';
+        document.getElementById('sharesOutstanding').textContent = info.sharesOutstanding ? formatLargeNumber(info.sharesOutstanding) : 'N/A';
+        document.getElementById('totalRevenue').textContent = info.totalRevenue ? formatLargeNumber(info.totalRevenue) : 'N/A';
+        document.getElementById('financialCurrency').textContent = info.financialCurrency || 'N/A';
+    }
+        
     function formatLargeNumber(num) {
         if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
         if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
@@ -237,22 +332,76 @@ function updateStockInfo(info, history) {
         if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
         return num.toFixed(2);
     }
+        
+    function loadChart(historyData, stockInfo) {
+        console.log('=== loadChart called ===');
+        console.log('historyData:', historyData);
+        console.log('stockInfo:', stockInfo);
+
+    console.log('Loading chart with interval:', currentInterval);
+    console.log('History data:', historyData);
     
-function loadChart(data) {
     const ctx = document.getElementById('priceChart').getContext('2d');
     
-    const timestamps = Object.keys(data.history);
-    const prices = Object.values(data.history);
+    if (currentChart) {
+        currentChart.destroy();
+    }
     
-    // Convert timestamps to DD/MM format with leading zeros
+    const timestamps = Object.keys(historyData);
+    const prices = Object.values(historyData);
+    
+    console.log('Timestamps count:', timestamps.length);
+    console.log('Prices count:', prices.length);
+    
+    // Format labels based on current interval
     const labels = timestamps.map(timestamp => {
         const date = new Date(parseInt(timestamp) * 1000);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        return `${day}/${month}`;
+        console.log('Processing timestamp:', timestamp, 'date:', date);
+        
+        let formattedLabel = '';
+        
+        if (currentInterval === '1d') {
+            // Format: 14:30
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            formattedLabel = `${hours}:${minutes}`;
+        } else if (currentInterval === '5d') {
+            // Format: 13/01 14:30
+            const day5d = String(date.getDate()).padStart(2, '0');
+            const month5d = String(date.getMonth() + 1).padStart(2, '0');
+            const hours5d = String(date.getHours()).padStart(2, '0');
+            const minutes5d = String(date.getMinutes()).padStart(2, '0');
+            formattedLabel = `${day5d}/${month5d} ${hours5d}:${minutes5d}`;
+        } else if (currentInterval === '1mo') {
+            // Format: 13/01
+            const day1mo = String(date.getDate()).padStart(2, '0');
+            const month1mo = String(date.getMonth() + 1).padStart(2, '0');
+            formattedLabel = `${day1mo}/${month1mo}`;
+        } else if (currentInterval === '3mo') {
+            // Format: 13/01 2024
+            const day3mo = String(date.getDate()).padStart(2, '0');
+            const month3mo = String(date.getMonth() + 1).padStart(2, '0');
+            const year3mo = date.getFullYear();
+            formattedLabel = `${day3mo}/${month3mo} ${year3mo}`;
+        } else if (currentInterval === '1y' || currentInterval === '5y' || currentInterval === 'max') {
+            // Format: 01 2024
+            const monthLong = String(date.getMonth() + 1).padStart(2, '0');
+            const yearLong = date.getFullYear();
+            formattedLabel = `${monthLong} ${yearLong}`;
+        } else {
+            // Fallback
+            const dayDefault = String(date.getDate()).padStart(2, '0');
+            const monthDefault = String(date.getMonth() + 1).padStart(2, '0');
+            formattedLabel = `${dayDefault}/${monthDefault}`;
+        }
+        
+        console.log('Formatted label:', formattedLabel);
+        return formattedLabel;
     });
     
-    new Chart(ctx, {
+    console.log('All labels:', labels);
+    
+    currentChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -281,7 +430,7 @@ function loadChart(data) {
                 y: {
                     title: {
                         display: true,
-                        text: `Price (${data.info?.currency || 'USD'})`
+                        text: `Price (${stockInfo?.currency || 'USD'})`
                     },
                     beginAtZero: false,
                     grid: {
@@ -293,15 +442,17 @@ function loadChart(data) {
                         color: 'rgba(0, 0, 0, 0.1)'
                     },
                     ticks: {
-                        // Show all labels (daily) without limit
-                        maxTicksLimit: false,
-                        autoSkip: false
+                        maxTicksLimit: currentInterval === '1d' ? 8 : 12,
+                        autoSkip: true,
+                        font: {
+                            size: 11
+                        }
                     }
                 }
             },
             plugins: {
                 legend: {
-                        display: false
+                    display: false
                 },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -311,19 +462,20 @@ function loadChart(data) {
                     borderWidth: 1,
                     callbacks: {
                         title: function(context) {
-                            // Show full date in tooltip
                             const timestamp = timestamps[context[0].dataIndex];
                             const date = new Date(parseInt(timestamp) * 1000);
                             return date.toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 year: 'numeric',
                                 month: 'short',
-                                day: 'numeric'
+                                day: 'numeric',
+                                hour: currentInterval === '1d' || currentInterval === '5d' ? '2-digit' : undefined,
+                                minute: currentInterval === '1d' || currentInterval === '5d' ? '2-digit' : undefined
                             });
                         },
                         label: function(context) {
                             const price = context.parsed.y;
-                            const currency = data.info?.currency || 'USD';
+                            const currency = stockInfo?.currency || 'USD';
                             return `${currency} ${price.toFixed(2)}`;
                         }
                     }
@@ -331,8 +483,8 @@ function loadChart(data) {
             }
         }
     });
+    
+    console.log('Chart created successfully');
 }
-});
+})
 </script>
-
-<?php require_once __DIR__ . '/../layouts/footer.php'; ?>
