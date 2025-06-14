@@ -125,4 +125,33 @@ class User {
             return false;
         }
     }
+
+    public function updateChartTimeInterval($userId, $interval) {
+        $validIntervals = ['1d', '5d', '1mo', '3mo', '1y', '5y', 'max'];
+
+        if (!in_array($interval, $validIntervals)) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare("
+            UPDATE users
+            SET chart_time_interval = ?
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([$interval, $userId]);
+    }
+
+    public function getChartTimeInterval($userId) {
+        $stmt = $this->db->prepare("
+            SELECT chart_time_interval
+            FROM users
+            WHERE id = ?
+        ");
+
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result ? $result['chart_time_interval'] : '1mo';
+    }
 }

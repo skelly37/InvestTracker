@@ -120,12 +120,45 @@ class DashboardController extends BaseController {
         $userId = Session::getUserId();
         $user = $this->user->findById($userId);
         
+        // Get user's chart time interval preference
+        $chartTimeInterval = $this->user->getChartTimeInterval($userId);
+        
         $this->view('dashboard/settings', [
             'title' => 'Settings - InvestTracker',
             'user' => $user,
+            'chartTimeInterval' => $chartTimeInterval,
             'csrf_token' => $this->generateCSRF(),
             'flashMessage' => Session::getFlash('message')
         ]);
+    }
+
+    public function updatePreferences(): void {
+        $this->requireAuth();
+        
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Invalid request method'], 405);
+        }
+        
+        if (!$this->validateCSRF()) {
+            $this->json(['success' => false, 'message' => 'Invalid security token'], 403);
+        }
+        
+        $input = $this->sanitizeInput($_POST);
+        $chartInterval = $input['chart_time_interval'] ?? '';
+        
+        $validIntervals = ['1d', '5d', '1mo', '3mo', '1y', '5y', 'max'];
+        
+        if (!in_array($chartInterval, $validIntervals)) {
+            $this->json(['success' => false, 'message' => 'Invalid chart interval'], 400);
+        }
+        
+        $userId = Session::getUserId();
+        
+        if ($this->user->updateChartTimeInterval($userId, $chartInterval)) {
+            $this->json(['success' => true, 'message' => 'Preferences updated successfully']);
+        } else {
+            $this->json(['success' => false, 'message' => 'Failed to update preferences'], 500);
+        }
     }
 
     public function clearRecentHistory(): void {

@@ -98,16 +98,6 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     </div>
                     
                     <div class="form-group">
-                        <label class="label">Interval for Price Difference</label>
-                        <select class="input" id="priceDifferenceInterval">
-                            <option value="day-to-day">Day-to-Day</option>
-                            <option value="week-to-week">Week-to-Week</option>
-                            <option value="month-to-month">Month-to-Month</option>
-                            <option value="year-to-year">Year-to-Year</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
                         <button type="button" class="btn btn--primary" id="savePreferences">
                             Save Preferences
                         </button>
@@ -150,22 +140,35 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load preferences from localStorage
-    const chartTimeInterval = localStorage.getItem('chartTimeInterval') || '1mo';
-    const priceDifferenceInterval = localStorage.getItem('priceDifferenceInterval') || 'day-to-day';
+    // Load preferences from database
+    const chartTimeInterval = '<?= htmlspecialchars($chartTimeInterval ?? "1mo") ?>';
     
     document.getElementById('chartTimeInterval').value = chartTimeInterval;
-    document.getElementById('priceDifferenceInterval').value = priceDifferenceInterval;
     
     // Save preferences
     document.getElementById('savePreferences').addEventListener('click', function() {
         const chartInterval = document.getElementById('chartTimeInterval').value;
-        const priceInterval = document.getElementById('priceDifferenceInterval').value;
+        const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
         
-        localStorage.setItem('chartTimeInterval', chartInterval);
-        localStorage.setItem('priceDifferenceInterval', priceInterval);
-        
-        alert('Preferences saved successfully!');
+        fetch('/dashboard/update-preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `chart_time_interval=${encodeURIComponent(chartInterval)}&csrf_token=${encodeURIComponent(csrfToken)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Preferences saved successfully!');
+            } else {
+                alert('Error: ' + (data.message || 'Failed to save preferences'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to save preferences');
+        });
     });
     
     // Clear recent history
@@ -194,14 +197,44 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-
+    
     // Delete account
     document.getElementById('deleteAccount').addEventListener('click', function() {
-        const confirmation = prompt('Type "DELETE" to confirm account deletion:');
-        if (confirmation === 'DELETE') {
-            if (confirm('Are you absolutely sure? This action cannot be undone!')) {
-                alert('Account deletion would be processed here. Please contact an administrator.');
-            }
+        const confirmMessage = 'Are you absolutely sure you want to delete your account?\n\n' +
+                              'This will permanently delete:\n' +
+                              '• Your account and login credentials\n' +
+                              '• All your favorites and recently viewed stocks\n' +
+                              '• All your settings and preferences\n\n' +
+                              'This action CANNOT be undone!\n\n' +
+                              'Type "DELETE" to confirm:';
+        
+        const userInput = prompt(confirmMessage);
+        
+        if (userInput === 'DELETE') {
+            const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
+            
+            fetch('/auth/delete-account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `csrf_token=${encodeURIComponent(csrfToken)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Your account has been deleted. You will be redirected to the login page.');
+                    window.location.href = '/login';
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to delete account'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete account');
+            });
+        } else if (userInput !== null) {
+            alert('Account deletion cancelled. You must type "DELETE" exactly to confirm.');
         }
     });
 });

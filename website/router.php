@@ -45,6 +45,7 @@ $routes = [
         '/auth/change-password' => ['AuthController', 'changePassword'],
         '/dashboard/add-favorite' => ['DashboardController', 'addFavorite'],
         '/dashboard/remove-favorite' => ['DashboardController', 'removeFavorite'],
+        '/dashboard/update-preferences' => ['DashboardController', 'updatePreferences'],
         '/users/create' => ['UserController', 'create'],
         '/users/update-role' => ['UserController', 'updateRole'],
         '/users/toggle-active' => ['UserController', 'toggleActive'],

@@ -23,7 +23,7 @@ require_once __DIR__ . '/../layouts/navigation.php';
                 </div>
                 
                 <div class="mt-2">
-                    <?php if ($isInFavorites): ?>
+                    <?php if ($isFavorite): ?>
                         <button class="btn btn--danger favorite-btn" 
                                 data-action="remove" 
                                 data-symbol="<?= htmlspecialchars($symbol) ?>"
@@ -171,10 +171,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 function loadStockData(symbol) {
+    const chartInterval = '<?= htmlspecialchars($chartTimeInterval ?? "1mo") ?>';
+    
     // Load both quote and history data from your Flask server
     Promise.all([
         fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`).then(response => response.json()),
-        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=1mo`).then(response => response.json())
+        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(chartInterval)}`).then(response => response.json())
     ])
     .then(([quoteData, historyData]) => {
         updateStockInfo(quoteData, historyData);

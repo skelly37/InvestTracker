@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP
+    last_login TIMESTAMP,
+    chart_time_interval VARCHAR(10) DEFAULT '1mo'
 );
 
 -- User favorites table
