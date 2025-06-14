@@ -34,3 +34,5 @@ docker compose down
 ![ERD Diagram](./erd.png)
 
 ## Demonstrational video
+https://github.com/user-attachments/assets/8dd7cd8e-4f16-409f-82b3-3d620c834975
+
