@@ -61,12 +61,6 @@ function loadGlobalHelperFunctions(): void {
         }
     }
 
-    if (!function_exists('isAdmin')) {
-        function isAdmin(): bool {
-            return Session::isAdmin();
-        }
-    }
-
     if (!function_exists('formatPrice')) {
         function formatPrice(?float $price): string {
             return $price ? '$' . number_format($price, 2) : 'N/A';

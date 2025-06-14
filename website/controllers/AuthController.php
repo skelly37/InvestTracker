@@ -63,7 +63,7 @@ class AuthController extends BaseController {
             if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
                 Session::set('login_old_username', $input['username']);
                 Session::set('login_error_credentials', 'Your account is inactive. Please contact the administrator to activate your account.');
-                $this->redirect('/login')
+                $this->redirect('/login');
             } else {
                 Session::set('login_old_username', $input['username']);
                 Session::set('login_error_credentials', 'A technical error occurred. Please try again.');

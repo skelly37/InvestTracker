@@ -41,7 +41,6 @@ services:
       - DB_NAME=invest_tracker
       - DB_USER=invest_user
       - DB_PASSWORD=secure_password_2024
-      - APP_ENV=production
       - TIMEZONE=UTC
     volumes:
       - ./website:/var/www/html

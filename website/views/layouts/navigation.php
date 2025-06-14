@@ -13,7 +13,7 @@
             </form>
             
             <nav class="nav-buttons">
-                <?php if (isAdmin()): ?>
+                <?php if (Session::isAdmin()): ?>
                     <a href="/users" class="btn <?= isCurrentPage('/users') ? 'btn--primary' : '' ?>">
                         <span class="nav-icon">👥</span>
                         <span class="nav-text">Users</span>
