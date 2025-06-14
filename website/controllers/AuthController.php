@@ -46,21 +46,19 @@ class AuthController extends BaseController {
         }
         
         // Attempt authentication using login method
-        $loginResult = $this->user->login($input['username'], $input['password']);
-        
-        if ($loginResult) {
+        $userData = $this->user->login($input['username'], $input['password']);
+
+        if ($userData) {
+            Session::setUser($userData);
+
             // Clear old input
             $this->clearOldInput();
-            
+
             // Redirect to intended page or dashboard
             $redirectTo = Session::get('intended_url', '/dashboard');
             Session::remove('intended_url');
-            
+
             $this->redirect($redirectTo, 'Welcome back, ' . $input['username'] . '!');
-        } else {
-            // Store username for convenience
-            Session::set('old_username', $input['username']);
-            $this->redirect('/login', 'Invalid username or password.');
         }
     }
     

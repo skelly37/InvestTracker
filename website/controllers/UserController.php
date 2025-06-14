@@ -5,7 +5,7 @@ class UserController extends BaseController {
         $this->requireAdmin();
         
         try {
-            $users = $this->user->getAll();
+            $users = $this->user->getAllUsers();
             
             $this->view('users/index', [
                 'title' => 'User Management - InvestTracker',
@@ -165,7 +165,7 @@ class UserController extends BaseController {
         }
         
         try {
-            $userId = $this->user->create($input['username'], $input['password'], $input['role']);
+            $userId = $this->user->register($input['username'], $input['password'], $input['role']);
             
             if ($userId) {
                 $this->redirect('/users', 'User created successfully.');

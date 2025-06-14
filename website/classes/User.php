@@ -6,30 +6,24 @@ class User {
         $this->db = Database::getInstance();
     }
     
-    public function login($username, $password) {
+    public function login(string $username, string $password): ?array {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND (active = true)");
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($user && password_verify($password, $user['password'])) {
-                // Aktualizuj last_login
+                // Update last login
                 $updateStmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
                 $updateStmt->execute([$user['id']]);
-                
-                // Ustaw dane sesji
-                Session::set('user_id', $user['id']);
-                Session::set('username', $user['username']);
-                Session::set('role', $user['role']);
-                Session::set('is_logged_in', true);
-                
-                return true;
+
+                return $user; // Zwracaj pełne dane użytkownika
             }
-            
-            return false;
+
+            return null;
         } catch (PDOException $e) {
             error_log("Login error: " . $e->getMessage());
-            return false;
+            return null;
         }
     }
     
@@ -108,7 +102,7 @@ class User {
     
     public function toggleActive($userId) {
         try {
-            $stmt = $this->db->prepare("UPDATE users SET is_active = NOT COALESCE(is_active, 1) WHERE id = ?");
+            $stmt = $this->db->prepare("UPDATE users SET active = NOT COALESCE(active, true) WHERE id = ?");
             return $stmt->execute([$userId]);
         } catch (PDOException $e) {
             error_log("Toggle active error: " . $e->getMessage());
