@@ -164,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Failed to save preferences');
         });
     });
@@ -189,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Failed to clear recent history');
             });
         }
@@ -226,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Failed to delete account');
             });
         } else if (userInput !== null) {

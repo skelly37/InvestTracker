@@ -14,7 +14,6 @@ class Database {
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
         } catch (PDOException $e) {
-            error_log("Database connection error: " . $e->getMessage());
             throw new Exception("Database connection failed");
         }
     }
@@ -36,17 +35,5 @@ class Database {
     
     public function lastInsertId() {
         return $this->connection->lastInsertId();
-    }
-    
-    public function beginTransaction() {
-        return $this->connection->beginTransaction();
-    }
-    
-    public function commit() {
-        return $this->connection->commit();
-    }
-    
-    public function rollback() {
-        return $this->connection->rollback();
     }
 }

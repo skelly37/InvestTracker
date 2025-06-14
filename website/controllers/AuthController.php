@@ -111,7 +111,6 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Username already exists. Please choose a different one.');
         } else {
             Session::set('register_old_username', $input['username']);
-            error_log("Registration failed for username: " . $input['username'] . ", result: " . var_export($result, true));
             $this->redirect('/login', 'Registration failed due to a technical error. Please try again.');
         }
     }
@@ -224,7 +223,6 @@ class AuthController extends BaseController {
                 $this->json(['success' => false, 'message' => 'Failed to delete account'], 500);
             }
         } catch (Exception $e) {
-            error_log("Delete account error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'An error occurred while deleting account'], 500);
         }
     }

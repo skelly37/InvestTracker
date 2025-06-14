@@ -14,8 +14,6 @@ class UserController extends BaseController {
             ]);
             
         } catch (Exception $e) {
-            error_log("Users index error: " . $e->getMessage());
-            
             $this->view('users/index', [
                 'title' => 'User Management - InvestTracker',
                 'users' => [],
@@ -66,7 +64,6 @@ class UserController extends BaseController {
                 $this->json(['success' => false, 'message' => 'Failed to update user status'], 500);
             }
         } catch (Exception $e) {
-            error_log("Toggle active error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Failed to update user status'], 500);
         }
     }
@@ -111,7 +108,6 @@ class UserController extends BaseController {
                 $this->json(['success' => false, 'message' => 'Failed to update user role'], 500);
             }
         } catch (Exception $e) {
-            error_log("Update role error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Failed to update user role'], 500);
         }
     }
@@ -149,7 +145,6 @@ class UserController extends BaseController {
                 $this->json(['success' => false, 'message' => 'Failed to delete user'], 500);
             }
         } catch (Exception $e) {
-            error_log("Delete user error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Failed to delete user'], 500);
         }
     }
@@ -193,7 +188,6 @@ class UserController extends BaseController {
                 $this->redirect('/users', 'Failed to create user. Username may already exist.');
             }
         } catch (Exception $e) {
-            error_log("Create user error: " . $e->getMessage());
             $this->redirect('/users', 'Failed to create user. Please try again.');
         }
     }

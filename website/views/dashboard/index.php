@@ -97,33 +97,24 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard loading...');
-    
     loadRecentlyViewed();
     loadPopularStocks();
     loadMarketIndices();
     
     function loadRecentlyViewed() {
         const recentlyViewed = <?= json_encode($recentlyViewed ?? []) ?>;
-        console.log('Recently viewed data:', recentlyViewed);
-        
         if (recentlyViewed && recentlyViewed.length > 0) {
             const promises = recentlyViewed.map(stock => {
                 const symbol = stock.symbol || stock.ticker || stock.name;
-                console.log('Loading recently viewed stock:', symbol, stock);
-                
                 if (!symbol) {
-                    console.error('No symbol found for recently viewed stock:', stock);
                     return Promise.resolve(null);
                 }
                 
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
-                        console.log('Response for recently viewed', symbol, ':', response.status);
                         return response.json();
                     })
                     .then(quote => {
-                        console.log('Quote data for recently viewed', symbol, ':', quote);
                         return {
                             symbol: symbol,
                             name: quote.name || stock.name || 'N/A',
@@ -133,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         };
                     })
                     .catch(error => {
-                        console.error('Error loading recently viewed stock', symbol, ':', error);
                         return {
                             symbol: symbol,
                             name: stock.name || 'Error',
@@ -146,34 +136,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             Promise.all(promises).then(results => {
                 const validResults = results.filter(r => r !== null);
-                console.log('Recently viewed results:', validResults);
                 updateRecentlyViewedSection(validResults);
             });
-        } else {
-            console.log('No recently viewed stocks');
         }
     }
     
     function loadPopularStocks() {
         const popularStocks = <?= json_encode($popularStocks ?? []) ?>;
-        console.log('Popular stocks data:', popularStocks);
-        
+
         if (popularStocks && popularStocks.length > 0) {
             const promises = popularStocks.map(symbol => {
-                console.log('Loading popular stock:', symbol);
-                
+
                 if (!symbol || typeof symbol !== 'string') {
-                    console.error('Invalid symbol for popular stock:', symbol);
                     return Promise.resolve(null);
                 }
                 
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
-                        console.log('Response for popular stock', symbol, ':', response.status);
                         return response.json();
                     })
                     .then(quote => {
-                        console.log('Quote data for popular stock', symbol, ':', quote);
                         return {
                             symbol: symbol,
                             name: quote.name || 'N/A',
@@ -183,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         };
                     })
                     .catch(error => {
-                        console.error('Error loading popular stock', symbol, ':', error);
                         return {
                             symbol: symbol,
                             name: 'Error',
@@ -196,34 +177,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             Promise.all(promises).then(results => {
                 const validResults = results.filter(r => r !== null);
-                console.log('Popular stocks results:', validResults);
                 updatePopularStocksSection(validResults);
             });
-        } else {
-            console.log('No popular stocks');
         }
     }
     
     function loadMarketIndices() {
         const indices = <?= json_encode($indices ?? []) ?>;
-        console.log('Market indices data:', indices);
-        
+
         if (indices && indices.length > 0) {
             const promises = indices.map(symbol => {
-                console.log('Loading market index:', symbol);
-                
+
                 if (!symbol || typeof symbol !== 'string') {
-                    console.error('Invalid symbol for market index:', symbol);
                     return Promise.resolve(null);
                 }
                 
                 return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
-                        console.log('Response for market index', symbol, ':', response.status);
                         return response.json();
                     })
                     .then(quote => {
-                        console.log('Quote data for market index', symbol, ':', quote);
                         return {
                             symbol: symbol,
                             name: quote.name || symbol,
@@ -233,7 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         };
                     })
                     .catch(error => {
-                        console.error('Error loading market index', symbol, ':', error);
                         return {
                             symbol: symbol,
                             name: 'Error',
@@ -246,17 +218,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             Promise.all(promises).then(results => {
                 const validResults = results.filter(r => r !== null);
-                console.log('Market indices results:', validResults);
                 updateMarketIndicesSection(validResults);
             });
-        } else {
-            console.log('No market indices');
         }
     }
     
     function updateRecentlyViewedSection(stocks) {
-        console.log('Updating recently viewed section with:', stocks);
-        
         stocks.forEach(stock => {
             const stockElement = document.querySelector(`#recently-viewed-container .stock-entry[data-symbol="${stock.symbol}"]`);
             if (stockElement) {
@@ -266,8 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updatePopularStocksSection(stocks) {
-        console.log('Updating popular stocks section with:', stocks);
-        
         stocks.forEach(stock => {
             const stockElement = document.querySelector(`#popular-stocks-container .stock-entry[data-symbol="${stock.symbol}"]`);
             if (stockElement) {
@@ -277,8 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateMarketIndicesSection(stocks) {
-        console.log('Updating market indices section with:', stocks);
-        
         stocks.forEach(stock => {
             const stockElement = document.querySelector(`#market-indices-container .stock-entry[data-symbol="${stock.symbol}"]`);
             if (stockElement) {

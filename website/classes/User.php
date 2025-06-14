@@ -32,7 +32,6 @@ class User {
             if ($e->getMessage() === 'ACCOUNT_INACTIVE') {
                 throw $e;
             }
-            error_log("Login error: " . $e->getMessage());
             return null;
         }
     }
@@ -52,12 +51,10 @@ class User {
             if ($result) {
                 return $this->db->lastInsertId();
             } else {
-                error_log("Registration failed - INSERT query returned false for username: $username");
                 return false;
             }
             
         } catch (PDOException $e) {
-            error_log("Registration error: " . $e->getMessage());
             return false;
         }
     }
@@ -77,7 +74,6 @@ class User {
             return $updateStmt->execute([$hashedPassword, $userId]);
             
         } catch (PDOException $e) {
-            error_log("Change password error: " . $e->getMessage());
             return false;
         }
     }
@@ -88,7 +84,6 @@ class User {
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Get user error: " . $e->getMessage());
             return false;
         }
     }
@@ -98,7 +93,6 @@ class User {
             $stmt = $this->db->query("SELECT id, username, role, active, created_at, last_login FROM users ORDER BY created_at DESC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Get all users error: " . $e->getMessage());
             return [];
         }
     }
@@ -108,7 +102,6 @@ class User {
             $stmt = $this->db->prepare("UPDATE users SET role = ? WHERE id = ?");
             return $stmt->execute([$role, $userId]);
         } catch (PDOException $e) {
-            error_log("Update role error: " . $e->getMessage());
             return false;
         }
     }
@@ -116,23 +109,14 @@ class User {
     public function toggleActive($userId) {
         try {
             $currentStatus = $this->isActive($userId);
-            error_log("Toggle active - current status for user $userId: " . ($currentStatus ? 'true' : 'false'));
-            
+
             $newStatus = $currentStatus ? 0 : 1;
-            error_log("Toggle active - setting new status to: $newStatus");
-            
+
             $stmt = $this->db->prepare("UPDATE users SET active = ? WHERE id = ?");
             $result = $stmt->execute([$newStatus, $userId]);
-            
-            if ($result) {
-                error_log("Toggle active - update successful");
-            } else {
-                error_log("Toggle active - update failed");
-            }
-            
+
             return $result;
         } catch (PDOException $e) {
-            error_log("Toggle active error: " . $e->getMessage());
             return false;
         }
     }
@@ -144,18 +128,14 @@ class User {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result === false) {
-                error_log("isActive - User $userId not found, returning default true");
                 return true;
             }
             
             $isActiveValue = isset($result['active']) ? (int)$result['active'] : 1;
             $isActive = $isActiveValue === 1;
-            
-            error_log("isActive - userId: $userId, raw value: " . var_export($result['active'], true) . ", converted: " . ($isActive ? 'true' : 'false'));
-            
+
             return $isActive;
         } catch (PDOException $e) {
-            error_log("Get user active status error: " . $e->getMessage());
             return true;
         }
     }
@@ -165,7 +145,6 @@ class User {
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
             return $stmt->execute([$userId]);
         } catch (PDOException $e) {
-            error_log("Delete user error: " . $e->getMessage());
             return false;
         }
     }

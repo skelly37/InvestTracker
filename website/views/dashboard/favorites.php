@@ -109,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Failed to remove from favorites');
                 });
             }
@@ -123,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateRowData(row, data);
             })
             .catch(error => {
-                console.error('Error loading stock data for', symbol, ':', error);
                 updateRowError(row);
             });
     }

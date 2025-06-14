@@ -110,17 +110,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const button = e.target;
         const symbol = button.dataset.symbol;
         const csrf = button.dataset.csrf;
-        
-        console.log('Adding to favorites:', symbol);
-        
+
         fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
             .then(response => {
-                console.log('Quote response status:', response.status);
                 return response.json();
             })
             .then(stockData => {
-                console.log('Quote data received:', stockData);
-                
                 return fetch('/dashboard/add-favorite', {
                     method: 'POST',
                     headers: {
@@ -130,11 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .then(response => {
-                console.log('Add favorite response status:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('Add favorite response:', data);
                 if (data.success) {
                     switchToRemoveButton(button);
                 } else {
@@ -142,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error adding to favorites:', error);
                 alert('Failed to add to favorites');
             });
     }
@@ -152,8 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const symbol = button.dataset.symbol;
         const csrf = button.dataset.csrf;
         
-        console.log('Removing from favorites:', symbol);
-        
+
         fetch('/dashboard/remove-favorite', {
             method: 'POST',
             headers: {
@@ -162,11 +153,9 @@ document.addEventListener('DOMContentLoaded', function() {
             body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
         })
         .then(response => {
-            console.log('Remove favorite response status:', response.status);
             return response.json();
         })
         .then(data => {
-            console.log('Remove favorite response:', data);
             if (data.success) {
                 switchToAddButton(button);
             } else {
@@ -174,7 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error removing from favorites:', error);
             alert('Failed to remove from favorites');
         });
     }

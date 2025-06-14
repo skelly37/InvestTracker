@@ -21,7 +21,6 @@ class Stock {
             $stmt->execute([$userId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Get favorites error: " . $e->getMessage());
             return [];
         }
     }
@@ -36,7 +35,6 @@ class Stock {
             $stmt->execute([$userId, $symbol]);
             return ['success' => true, 'message' => 'Added to favorites'];
         } catch (Exception $e) {
-            error_log("Add to favorites error: " . $e->getMessage());
             return ['success' => false, 'message' => 'Failed to add to favorites'];
         }
     }
@@ -47,7 +45,6 @@ class Stock {
             $stmt->execute([$userId, $symbol]);
             return ['success' => true, 'message' => 'Removed from favorites'];
         } catch (Exception $e) {
-            error_log("Remove from favorites error: " . $e->getMessage());
             return ['success' => false, 'message' => 'Failed to remove from favorites'];
         }
     }
@@ -58,7 +55,6 @@ class Stock {
             $stmt->execute([$userId, $symbol]);
             return (bool) $stmt->fetch();
         } catch (Exception $e) {
-            error_log("Check favorite error: " . $e->getMessage());
             return false;
         }
     }
@@ -91,7 +87,6 @@ class Stock {
             
             return true;
         } catch (Exception $e) {
-            error_log("Add to recently viewed error: " . $e->getMessage());
             return false;
         }
     }
@@ -108,7 +103,6 @@ class Stock {
             $stmt->execute([$userId, $limit]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Get recently viewed error: " . $e->getMessage());
             return [];
         }
     }
@@ -118,7 +112,6 @@ class Stock {
         $cachedData = $this->getCachedData($cacheUri);
         
         if ($cachedData !== null) {
-            error_log("Cache HIT for search: $query");
             return $cachedData;
         }
         
@@ -144,11 +137,9 @@ class Stock {
             
             $results = $data['results'];
             $this->cacheData($cacheUri, $results);
-            error_log("Cache MISS for search: $query - data cached");
-            
+
             return $results;
         } catch (Exception $e) {
-            error_log("Search error for '{$query}': " . $e->getMessage());
             return [];
         }
     }
@@ -158,7 +149,6 @@ class Stock {
         $cachedData = $this->getCachedData($cacheUri);
         
         if ($cachedData !== null) {
-            error_log("Cache HIT for quote: $symbol");
             return $cachedData;
         }
         
@@ -186,7 +176,6 @@ class Stock {
             
             return $data;
         } catch (Exception $e) {
-            error_log("Get quote error for {$symbol}: " . $e->getMessage());
             return null;
         }
     }
@@ -196,7 +185,6 @@ class Stock {
         $cachedData = $this->getCachedData($cacheUri);
         
         if ($cachedData !== null) {
-            error_log("Cache HIT for history: $symbol, interval: $interval");
             return $cachedData;
         }
         
@@ -221,11 +209,9 @@ class Stock {
             }
             
             $this->cacheData($cacheUri, $data);
-            error_log("Cache MISS for history: $symbol, interval: $interval - data cached");
-            
+
             return $data;
         } catch (Exception $e) {
-            error_log("Get history error for {$symbol}: " . $e->getMessage());
             return null;
         }
     }
@@ -248,7 +234,6 @@ class Stock {
             
             return null;
         } catch (Exception $e) {
-            error_log("Cache read error: " . $e->getMessage());
             return null;
         }
     }
@@ -263,9 +248,7 @@ class Stock {
                     created_at = EXCLUDED.created_at
             ");
             $stmt->execute([$uri, json_encode($data)]);
-            error_log("Data cached for uri: $uri");
         } catch (Exception $e) {
-            error_log("Cache write error: " . $e->getMessage());
         }
     }
     
@@ -288,7 +271,6 @@ class Stock {
             $stmt->execute([$userId]);
             return true;
         } catch (PDOException $e) {
-            error_log("Error clearing recent history: " . $e->getMessage());
             return false;
         }
     }

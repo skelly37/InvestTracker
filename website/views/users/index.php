@@ -251,7 +251,6 @@ function updateUserRole(userId, newRole) {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Failed to update user role');
             location.reload();
         });
@@ -278,16 +277,13 @@ function toggleUserActive(userId) {
             body: `user_id=${userId}&csrf_token=${encodeURIComponent(csrfToken)}`
         })
         .then(response => {
-            console.log('Response status:', response.status);
             return response.json();
         })
         .then(data => {
-            console.log('Response data:', data);
-            
+
             if (data.success) {
                 const newStatus = data.active;
-                console.log('New status from server:', newStatus);
-                
+
                 statusSpan.textContent = newStatus ? 'Active' : 'Inactive';
                 statusSpan.className = `user-status user-status--${newStatus ? 'active' : 'inactive'}`;
                 statusSpan.setAttribute('data-status', newStatus ? 'active' : 'inactive');
@@ -295,18 +291,14 @@ function toggleUserActive(userId) {
                 button.textContent = newStatus ? 'Deactivate' : 'Activate';
                 button.setAttribute('data-current-status', newStatus ? 'active' : 'inactive');
                 button.disabled = false;
-                
-                console.log(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
-                
+
             } else {
-                console.error('Server returned error:', data.message);
                 alert(data.message || 'Failed to update user status');
                 button.disabled = false;
                 button.textContent = originalButtonText;
             }
         })
         .catch(error => {
-            console.error('Fetch error:', error);
             alert('Failed to update user status');
             button.disabled = false;
             button.textContent = originalButtonText;
@@ -332,7 +324,6 @@ function deleteUser(userId, username) {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Failed to delete user');
         });
     }

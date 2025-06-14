@@ -22,11 +22,7 @@ class Validator {
     public function getErrors(): array {
         return $this->errors;
     }
-    
-    public function getFirstError(string $field): ?string {
-        return $this->errors[$field][0] ?? null;
-    }
-    
+
     private function validateField(string $field, array $rules): void {
         $value = $this->data[$field] ?? null;
         

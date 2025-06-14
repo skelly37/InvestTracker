@@ -21,7 +21,6 @@ class StockController extends BaseController {
                 }
                 
             } catch (Exception $e) {
-                error_log("Search error: " . $e->getMessage());
                 $error = 'Search temporarily unavailable. Please try again later.';
             }
         }
@@ -51,14 +50,19 @@ class StockController extends BaseController {
         $this->stock->addToRecentlyViewed($userId, $symbol);
         
         $isFavorite = $this->stock->isFavorite($userId, $symbol);
-        
+
+        $flashMessage = Session::get('flash_message');
+        if ($flashMessage) {
+            Session::remove('flash_message');
+        }
+
         $this->view('stock/detail', [
             'title' => $symbol . ' - Stock Detail - InvestTracker',
             'symbol' => $symbol,
             'isFavorite' => $isFavorite,
             'chartTimeInterval' => $chartTimeInterval,
             'csrf_token' => $this->generateCSRF(),
-            'flashMessage' => Session::getFlash('message')
+            'flashMessage' => $flashMessage
         ]);
     }
     
@@ -81,7 +85,6 @@ class StockController extends BaseController {
             $data = $this->stock->getHistoricalData($symbol, $period);
             $this->json(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
-            error_log("Historical data error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Failed to fetch historical data'], 500);
         }
     }
@@ -112,7 +115,6 @@ class StockController extends BaseController {
             $this->json(['suggestions' => $suggestions]);
             
         } catch (Exception $e) {
-            error_log("Autocomplete error: " . $e->getMessage());
             $this->json(['suggestions' => []]);
         }
     }
@@ -136,7 +138,6 @@ class StockController extends BaseController {
             }
             
         } catch (Exception $e) {
-            error_log("Quote error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Failed to fetch quote'], 500);
         }
     }

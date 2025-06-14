@@ -19,8 +19,6 @@ class DashboardController extends BaseController {
             ]);
             
         } catch (Exception $e) {
-            error_log("Dashboard error: " . $e->getMessage());
-            
             $this->view('dashboard/index', [
                 'title' => 'Dashboard - InvestTracker',
                 'recentlyViewed' => [],
@@ -45,8 +43,6 @@ class DashboardController extends BaseController {
             ]);
             
         } catch (Exception $e) {
-            error_log("Favorites error: " . $e->getMessage());
-            
             $this->view('dashboard/favorites', [
                 'title' => 'Favorites - InvestTracker',
                 'favorites' => [],
@@ -116,13 +112,18 @@ class DashboardController extends BaseController {
         $user = $this->user->findById($userId);
         
         $chartTimeInterval = $this->user->getChartTimeInterval($userId);
+
+        $flashMessage = Session::get('flash_message');
+        if ($flashMessage) {
+            Session::remove('flash_message');
+        }
         
         $this->view('dashboard/settings', [
             'title' => 'Settings - InvestTracker',
             'user' => $user,
             'chartTimeInterval' => $chartTimeInterval,
             'csrf_token' => $this->generateCSRF(),
-            'flashMessage' => Session::getFlash('message')
+            'flashMessage' => $flashMessage
         ]);
     }
 

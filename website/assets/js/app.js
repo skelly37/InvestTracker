@@ -49,7 +49,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Autocomplete error:', error);
                     hideAutocomplete();
                 });
         }

@@ -63,14 +63,4 @@ class Session {
         self::start();
         session_regenerate_id(true);
     }
-    
-    public static function setFlash(string $key, string $message): void {
-        self::set('flash_' . $key, $message);
-    }
-    
-    public static function getFlash(string $key): ?string {
-        $message = self::get('flash_' . $key);
-        self::remove('flash_' . $key);
-        return $message;
-    }
 }

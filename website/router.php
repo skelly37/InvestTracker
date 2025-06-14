@@ -82,7 +82,6 @@ try {
         require_once __DIR__ . '/views/layouts/footer.php';
     }
 } catch (Exception $e) {
-    error_log("Router error: " . $e->getMessage());
     http_response_code(500);
 
     if (Session::isLoggedIn()) {

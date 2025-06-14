@@ -31,7 +31,7 @@ set_error_handler(function($severity, $message, $file, $line) {
     if (!(error_reporting() & $severity)) {
         return false;
     }
-    
+
     $errorType = 'Unknown Error';
     switch ($severity) {
         case E_ERROR:
@@ -51,20 +51,11 @@ set_error_handler(function($severity, $message, $file, $line) {
             $errorType = 'Notice';
             break;
     }
-    
-    $logMessage = "[$errorType] $message in $file on line $line";
-    error_log($logMessage);
-    
+
     return true;
 });
 
 set_exception_handler(function($exception) {
-    $message = $exception->getMessage();
-    $file = $exception->getFile();
-    $line = $exception->getLine();
-    
-    error_log("Uncaught Exception: $message in $file on line $line");
-
     http_response_code(500);
     echo "<h1>500 - Internal Server Error</h1>";
     echo "<p>Something went wrong. Please try again later.</p>";
@@ -117,8 +108,6 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $req
 try {
     require_once APP_ROOT . '/router.php';
 } catch (Exception $e) {
-    error_log('Router failed to load: ' . $e->getMessage());
-
     http_response_code(500);
     echo "<h1>500 - Service Unavailable</h1>";
     echo "<p>The service is temporarily unavailable. Please try again later.</p>";
