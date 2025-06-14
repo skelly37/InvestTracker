@@ -40,7 +40,7 @@ require_once __DIR__ . '/../layouts/navigation.php';
                             </thead>
                             <tbody>
                                 <?php foreach ($users as $user): ?>
-                                    <tr>
+                                    <tr data-user-id="<?= $user['id'] ?>">
                                         <td><?= htmlspecialchars($user['id']) ?></td>
                                         <td><?= htmlspecialchars($user['username']) ?></td>
                                         <td>
@@ -52,8 +52,9 @@ require_once __DIR__ . '/../layouts/navigation.php';
                                             </select>
                                         </td>
                                         <td>
-                                            <span class="user-status user-status--<?= ($user['is_active'] ?? true) ? 'active' : 'inactive' ?>">
-                                                <?= ($user['is_active'] ?? true) ? 'Active' : 'Inactive' ?>
+                                            <span class="user-status user-status--<?= ($user['active'] ?? 1) ? 'active' : 'inactive' ?>" 
+                                                  data-status="<?= ($user['active'] ?? 1) ? 'active' : 'inactive' ?>">
+                                                <?= ($user['active'] ?? 1) ? 'Active' : 'Inactive' ?>
                                             </span>
                                         </td>
                                         <td><?= date('Y-m-d', strtotime($user['created_at'] ?? 'now')) ?></td>
@@ -61,9 +62,11 @@ require_once __DIR__ . '/../layouts/navigation.php';
                                         <td>
                                             <div class="user-actions">
                                                 <?php if ($user['id'] != Session::getUserId()): ?>
-                                                    <button class="btn btn--small btn--secondary" 
+                                                    <button class="btn btn--small btn--secondary toggle-active-btn" 
+                                                            data-user-id="<?= $user['id'] ?>"
+                                                            data-current-status="<?= ($user['active'] ?? 1) ? 'active' : 'inactive' ?>"
                                                             onclick="toggleUserActive(<?= $user['id'] ?>)">
-                                                        <?= ($user['is_active'] ?? true) ? 'Deactivate' : 'Activate' ?>
+                                                        <?= ($user['active'] ?? 1) ? 'Deactivate' : 'Activate' ?>
                                                     </button>
                                                     <button class="btn btn--small btn--danger" 
                                                             onclick="deleteUser(<?= $user['id'] ?>, '<?= htmlspecialchars($user['username']) ?>')">
@@ -258,12 +261,14 @@ function updateUserRole(userId, newRole) {
 }
 
 function toggleUserActive(userId) {
-    const button = event.target; // Pobierz przycisk który został kliknięty
-    const row = button.closest('tr');
+    // Znajdź elementy UI dla tego użytkownika
+    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+    const button = row.querySelector('.toggle-active-btn');
     const statusSpan = row.querySelector('.user-status');
     
     if (confirm('Toggle user active status?')) {
         // Wyłącz przycisk podczas requestu
+        const originalButtonText = button.textContent;
         button.disabled = true;
         button.textContent = 'Processing...';
         
@@ -274,38 +279,43 @@ function toggleUserActive(userId) {
             },
             body: `user_id=${userId}&csrf_token=${encodeURIComponent(csrfToken)}`
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
+            
             if (data.success) {
                 // Aktualizuj UI na podstawie odpowiedzi z serwera
-                const newStatus = data.active; // Załóżmy że serwer zwraca nowy status
+                const newStatus = data.active;
+                console.log('New status from server:', newStatus);
                 
                 // Aktualizuj status badge
                 statusSpan.textContent = newStatus ? 'Active' : 'Inactive';
                 statusSpan.className = `user-status user-status--${newStatus ? 'active' : 'inactive'}`;
+                statusSpan.setAttribute('data-status', newStatus ? 'active' : 'inactive');
                 
                 // Aktualizuj przycisk
                 button.textContent = newStatus ? 'Deactivate' : 'Activate';
+                button.setAttribute('data-current-status', newStatus ? 'active' : 'inactive');
                 button.disabled = false;
                 
-                // Pokaż komunikat sukcesu
-                if (window.InvestTracker && window.InvestTracker.showNotification) {
-                    window.InvestTracker.showNotification(
-                        `User ${newStatus ? 'activated' : 'deactivated'} successfully`, 
-                        'success'
-                    );
-                }
+                // Opcjonalnie: pokaż komunikat sukcesu
+                console.log(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
+                
             } else {
+                console.error('Server returned error:', data.message);
                 alert(data.message || 'Failed to update user status');
                 button.disabled = false;
-                button.textContent = statusSpan.textContent === 'Active' ? 'Deactivate' : 'Activate';
+                button.textContent = originalButtonText;
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Fetch error:', error);
             alert('Failed to update user status');
             button.disabled = false;
-            button.textContent = statusSpan.textContent === 'Active' ? 'Deactivate' : 'Activate';
+            button.textContent = originalButtonText;
         });
     }
 }
