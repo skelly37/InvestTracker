@@ -96,43 +96,43 @@ require_once __DIR__ . '/../layouts/navigation.php';
 </div>
 
 <div id="addUserModal" class="modal hidden">
-    <div class="modal-overlay" onclick="closeAddUserModal()"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Add New User</h3>
-            <button class="modal-close" onclick="closeAddUserModal()">×</button>
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="modal-close" onclick="closeAddUserModal()" type="button">×</button>
+            </div>
+            <form method="POST" action="/users/create" id="addUserForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="label" for="new_username">Username</label>
+                        <input type="text" id="new_username" name="username" class="input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label" for="new_password">Password</label>
+                        <input type="password" id="new_password" name="password" class="input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label" for="new_role">Role</label>
+                        <select id="new_role" name="role" class="input">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn--secondary" onclick="closeAddUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Create User</button>
+                </div>
+            </form>
         </div>
-        <form method="POST" action="/users/create" id="addUserForm">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-            
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="label" for="new_username">Username</label>
-                    <input type="text" id="new_username" name="username" class="input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="label" for="new_password">Password</label>
-                    <input type="password" id="new_password" name="password" class="input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="label" for="new_role">Role</label>
-                    <select id="new_role" name="role" class="input">
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn btn--secondary" onclick="closeAddUserModal()">Cancel</button>
-                <button type="submit" class="btn btn--primary">Create User</button>
-            </div>
-        </form>
     </div>
 </div>
-
 
 <script>
 const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
@@ -145,6 +145,7 @@ function closeAddUserModal() {
     document.getElementById('addUserModal').classList.add('hidden');
     document.getElementById('addUserForm').reset();
 }
+
 
 function updateUserRole(userId, newRole) {
     if (confirm(`Change user role to ${newRole}?`)) {
@@ -246,6 +247,12 @@ function deleteUser(userId, username) {
         });
     }
 }
+
+document.getElementById('addUserModal').addEventListener('click', function(e) {
+    if (e.target === this || e.target.classList.contains('modal-overlay')) {
+        closeAddUserModal();
+    }
+});
 
 document.getElementById('addUserBtn').addEventListener('click', openAddUserModal);
 </script>
