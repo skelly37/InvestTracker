@@ -64,21 +64,17 @@ require_once __DIR__ . '/../layouts/navigation.php';
                         <span class="metric__value" id="currentPrice">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">Currency:</span>
-                        <span class="metric__value" id="currency">Loading...</span>
-                    </div>
-                    <div class="metric">
                         <span class="metric__label">Exchange:</span>
                         <span class="metric__value" id="exchange">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric__label">Currency:</span>
+                        <span class="metric__value" id="currency">Loading...</span>
                     </div>
                 </div>
                 
                 <div class="analysis-section">
                     <div class="analysis-section__title">Financial Metrics</div>
-                    <div class="metric">
-                        <span class="metric__label">Market Cap:</span>
-                        <span class="metric__value" id="marketCap">Loading...</span>
-                    </div>
                     <div class="metric">
                         <span class="metric__label">P/B Ratio:</span>
                         <span class="metric__value" id="priceToBook">Loading...</span>
@@ -91,10 +87,18 @@ require_once __DIR__ . '/../layouts/navigation.php';
                         <span class="metric__label">ROE:</span>
                         <span class="metric__value" id="returnOnEquity">Loading...</span>
                     </div>
+                    <div class="metric">
+                        <span class="metric__label">Enterprise/EBITDA:</span>
+                        <span class="metric__value" id="enterpriseToEbitda">Loading...</span>
+                    </div>
                 </div>
                 
                 <div class="analysis-section">
                     <div class="analysis-section__title">Company Information</div>
+                    <div class="metric">
+                        <span class="metric__label">Market Cap:</span>
+                        <span class="metric__value" id="marketCap">Loading...</span>
+                    </div>
                     <div class="metric">
                         <span class="metric__label">Shares Outstanding:</span>
                         <span class="metric__value" id="sharesOutstanding">Loading...</span>
@@ -104,8 +108,8 @@ require_once __DIR__ . '/../layouts/navigation.php';
                         <span class="metric__value" id="totalRevenue">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">Enterprise/EBITDA:</span>
-                        <span class="metric__value" id="enterpriseToEbitda">Loading...</span>
+                        <span class="metric__label">Financial Currency:</span>
+                        <span class="metric__value" id="financialCurrency">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -188,8 +192,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateStockInfo(info, history) {
         document.getElementById('stockName').textContent = info.name || 'N/A';
-        document.getElementById('stockPrice').textContent = info.currency ? 
-            `${info.currency} ${info.currentPrice?.toFixed(2) || 'N/A'}` : 'N/A';
+        // Remove currency from price display
+        document.getElementById('stockPrice').textContent = info.currentPrice?.toFixed(2) || 'N/A';
         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
         
         // Calculate price change from history
@@ -217,25 +221,35 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stockChange').textContent = 'N/A';
         }
         
-        // Rest of the function remains the same...
-        document.getElementById('currentPrice').textContent = info.currency ? 
-            `${info.currency} ${info.currentPrice?.toFixed(2) || 'N/A'}` : 'N/A';
-        document.getElementById('currency').textContent = info.currency || 'N/A';
-        document.getElementById('exchange').textContent = info.exchange || 'N/A';
-        document.getElementById('marketCap').textContent = info.marketCap ? 
-            `${info.financialCurrency || '$'}${(info.marketCap / 1000000000).toFixed(2)}B` : 'N/A';
-        document.getElementById('priceToBook').textContent = info.priceToBook ? 
-            info.priceToBook.toFixed(2) : 'N/A';
-        document.getElementById('returnOnAssets').textContent = info.returnOnAssets ? 
-            (info.returnOnAssets * 100).toFixed(2) + '%' : 'N/A';
-        document.getElementById('returnOnEquity').textContent = info.returnOnEquity ? 
-            (info.returnOnEquity * 100).toFixed(2) + '%' : 'N/A';
-        document.getElementById('sharesOutstanding').textContent = info.sharesOutstanding ? 
-            (info.sharesOutstanding / 1000000).toFixed(0) + 'M' : 'N/A';
-        document.getElementById('totalRevenue').textContent = info.totalRevenue ? 
-            `${info.financialCurrency || '$'}${(info.totalRevenue / 1000000000).toFixed(2)}B` : 'N/A';
-        document.getElementById('enterpriseToEbitda').textContent = info.enterpriseToEbitda ? 
-            info.enterpriseToEbitda.toFixed(2) : 'N/A';
+        // Update metrics with safe element access
+        const updateElement = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        };
+        
+        updateElement('currentPrice', info.currentPrice?.toFixed(2) || 'N/A');
+        updateElement('exchange', info.exchange || 'N/A');
+        updateElement('currency', info.currency || 'N/A');
+        updateElement('priceToBook', info.priceToBook?.toFixed(2) || 'N/A');
+        updateElement('returnOnAssets', info.returnOnAssets ? 
+            `${(info.returnOnAssets * 100).toFixed(2)}%` : 'N/A');
+        updateElement('returnOnEquity', info.returnOnEquity ? 
+            `${(info.returnOnEquity * 100).toFixed(2)}%` : 'N/A');
+        updateElement('enterpriseToEbitda', info.enterpriseToEbitda?.toFixed(2) || 'N/A');
+        updateElement('marketCap', info.marketCap ? formatLargeNumber(info.marketCap) : 'N/A');
+        updateElement('sharesOutstanding', info.sharesOutstanding ? 
+            formatLargeNumber(info.sharesOutstanding) : 'N/A');
+        updateElement('totalRevenue', info.totalRevenue ? 
+            formatLargeNumber(info.totalRevenue) : 'N/A');
+        updateElement('financialCurrency', info.financialCurrency || 'N/A');
+    }
+    
+    function formatLargeNumber(num) {
+        if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+        return num.toFixed(2);
     }
     
 function loadChart(data) {
