@@ -13,7 +13,6 @@
     font-size: 14px;
 }
 
-/* Responsywność - na mniejszych ekranach pokaż tylko ikonki */
 @media (max-width: 768px) {
     .nav-text {
         display: none;

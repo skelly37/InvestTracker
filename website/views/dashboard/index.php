@@ -77,7 +77,9 @@ require_once __DIR__ . '/../layouts/navigation.php';
                             <?php foreach ($indices as $symbol): ?>
                                 <div class="stock-entry" data-symbol="<?= htmlspecialchars($symbol) ?>">
                                     <div class="stock__name">
-                                        <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
+                                        <a href="/stock?symbol=<?= urlencode($symbol) ?>">
+                                            <span class="stock-name-text"><?= htmlspecialchars($symbol) ?></span>
+                                        </a>
                                     </div>
                                     <div class="stock__price stock-price">Loading...</div>
                                     <div class="stock__change stock-change">Loading...</div>

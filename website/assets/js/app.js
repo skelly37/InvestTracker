@@ -1,24 +1,16 @@
-// Global app functionality
 (function() {
     'use strict';
     
-    // Initialize app when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
         initializeApp();
     });
     
     function initializeApp() {
-        // Initialize search autocomplete
         initSearchAutocomplete();
 
-        // Initialize flash message auto-hide
         initFlashMessages();
         
-        // Initialize tooltips
         initTooltips();
-        
-        // Initialize keyboard shortcuts
-        initKeyboardShortcuts();
     }
     
     function initSearchAutocomplete() {
@@ -125,7 +117,6 @@
     function initFlashMessages() {
         const flashMessages = document.querySelectorAll('.alert');
         flashMessages.forEach(message => {
-            // Auto-hide success messages after 5 seconds
             if (message.classList.contains('alert--success')) {
                 setTimeout(() => {
                     message.style.opacity = '0';
@@ -136,7 +127,6 @@
     }
     
     function initTooltips() {
-        // Simple tooltip implementation
         const elementsWithTooltips = document.querySelectorAll('[data-tooltip]');
         
         elementsWithTooltips.forEach(element => {
@@ -175,27 +165,5 @@
                 this._tooltip = null;
             }
         }
-    }
-    
-    function initKeyboardShortcuts() {
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + K: Focus search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const searchInput = document.querySelector('.search-bar__input');
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.select();
-                }
-            }
-            
-            // Escape: Close modals
-            if (e.key === 'Escape') {
-                const modals = document.querySelectorAll('.modal:not(.hidden)');
-                modals.forEach(modal => {
-                    modal.classList.add('hidden');
-                });
-            }
-        });
     }
 })();
