@@ -100,104 +100,96 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add to favorites
     addButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const symbol = this.dataset.symbol;
-            const csrf = this.dataset.csrf;
-            
-            // Najpierw pobierz dane z Twojego serwera Flask
-            fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
-                .then(response => response.json())
-                .then(stockData => {
-                    // Potem dodaj do ulubionych
-                    return fetch('/dashboard/add-favorite', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
-                    });
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.textContent = '✅ Added';
-                        this.classList.remove('btn--secondary', 'add-favorite-btn');
-                        this.classList.add('btn--primary', 'remove-favorite-btn');
-                        
-                        // Add remove functionality to this button
-                        this.addEventListener('click', createRemoveHandler(symbol, csrf));
-                    } else {
-                        alert(data.message || 'Failed to add to favorites');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to add to favorites');
-                });
-        });
+        button.addEventListener('click', handleAddFavorite);
     });
     
     // Remove from favorites
     removeButtons.forEach(button => {
-        button.addEventListener('click', createRemoveHandler(
-            button.dataset.symbol, 
-            button.dataset.csrf
-        ));
+        button.addEventListener('click', handleRemoveFavorite);
     });
     
-    function createRemoveHandler(symbol, csrf) {
-        return function() {
-            fetch('/dashboard/remove-favorite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+    function handleAddFavorite(e) {
+        const button = e.target;
+        const symbol = button.dataset.symbol;
+        const csrf = button.dataset.csrf;
+        
+        // Najpierw pobierz dane z Twojego serwera Flask
+        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+            .then(response => response.json())
+            .then(stockData => {
+                // Potem dodaj do ulubionych
+                return fetch('/dashboard/add-favorite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+                });
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    this.textContent = '❤️ Add';
-                    this.classList.remove('btn--primary', 'remove-favorite-btn');
-                    this.classList.add('btn--secondary', 'add-favorite-btn');
-                    
-                    // Add add functionality back to this button
-                    this.addEventListener('click', function() {
-                        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
-                            .then(response => response.json())
-                            .then(stockData => {
-                                return fetch('/dashboard/add-favorite', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
-                                    },
-                                    body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
-                                });
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    this.textContent = '✅ Added';
-                                    this.classList.remove('btn--secondary', 'add-favorite-btn');
-                                    this.classList.add('btn--primary', 'remove-favorite-btn');
-                                } else {
-                                    alert(data.message || 'Failed to add to favorites');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Failed to add to favorites');
-                            });
-                    });
+                    switchToRemoveButton(button);
                 } else {
-                    alert(data.message || 'Failed to remove from favorites');
+                    alert(data.message || 'Failed to add to favorites');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to remove from favorites');
+                alert('Failed to add to favorites');
             });
-        };
+    }
+    
+    function handleRemoveFavorite(e) {
+        const button = e.target;
+        const symbol = button.dataset.symbol;
+        const csrf = button.dataset.csrf;
+        
+        fetch('/dashboard/remove-favorite', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `symbol=${encodeURIComponent(symbol)}&csrf_token=${encodeURIComponent(csrf)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                switchToAddButton(button);
+            } else {
+                alert(data.message || 'Failed to remove from favorites');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to remove from favorites');
+        });
+    }
+    
+    function switchToRemoveButton(button) {
+        // Usuń poprzedni event listener
+        button.removeEventListener('click', handleAddFavorite);
+        
+        // Zmień wygląd i tekst
+        button.textContent = '✅ Added';
+        button.classList.remove('btn--secondary', 'add-favorite-btn');
+        button.classList.add('btn--primary', 'remove-favorite-btn');
+        
+        // Dodaj nowy event listener
+        button.addEventListener('click', handleRemoveFavorite);
+    }
+    
+    function switchToAddButton(button) {
+        // Usuń poprzedni event listener
+        button.removeEventListener('click', handleRemoveFavorite);
+        
+        // Zmień wygląd i tekst
+        button.textContent = '❤️ Add';
+        button.classList.remove('btn--primary', 'remove-favorite-btn');
+        button.classList.add('btn--secondary', 'add-favorite-btn');
+        
+        // Dodaj nowy event listener
+        button.addEventListener('click', handleAddFavorite);
     }
 });
 </script>
