@@ -65,7 +65,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
                 
                 <div class="form-group">
-                    <button type="submit" class="btn btn--full">Create Account</button>
+                    <button type="submit" class="btn btn--primary btn--full">Create Account</button>
                 </div>
             </form>
         </div>
