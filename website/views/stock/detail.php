@@ -15,15 +15,11 @@ require_once __DIR__ . '/../layouts/navigation.php';
             <!-- Stock Header -->
             <div class="stock-header">
                 <div class="stock-header__ticker"><?= htmlspecialchars($symbol) ?></div>
-                <div class="stock-header__name"><?= htmlspecialchars($stockData['name'] ?? $symbol) ?></div>
-                <div class="stock-header__price">
-                    <?= formatPrice($stockData['price'] ?? null) ?>
-                </div>
-                <div class="stock-header__change">
-                    <?= formatChange($stockData['change'] ?? null, $stockData['change_percent'] ?? null) ?>
-                </div>
-                <div class="stock-header__time">
-                    Last updated: <?= formatDate($stockData['last_updated'] ?? null) ?>
+                <div class="stock-header__name" id="stockName">Loading...</div>
+                <div class="stock-header__price" id="stockPrice">Loading...</div>
+                <div class="stock-header__change" id="stockChange">Loading...</div>
+                <div class="stock-header__time" id="stockTime">
+                    Last updated: <span id="lastUpdated">Loading...</span>
                 </div>
                 
                 <div class="mt-2">
@@ -47,21 +43,9 @@ require_once __DIR__ . '/../layouts/navigation.php';
             
             <!-- Chart Section -->
             <div class="chart-section">
-                <div class="chart-controls">
-                    <label for="period">Time Period:</label>
-                    <select id="period" class="input" style="width: auto; display: inline-block; margin-left: 10px;">
-                        <?php foreach ($validPeriods as $period): ?>
-                            <option value="<?= htmlspecialchars($period) ?>" 
-                                    <?= $period === $currentPeriod ? 'selected' : '' ?>>
-                                <?= strtoupper($period) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                
                 <div class="chart-container">
-                    <canvas id="stockChart" width="800" height="400"></canvas>
-                    <div id="chartLoading" class="text-center mt-3 hidden">
+                    <canvas id="priceChart" width="800" height="400"></canvas>
+                    <div id="chartLoading" class="text-center mt-3">
                         <div class="spinner"></div>
                         <p>Loading chart data...</p>
                     </div>
@@ -77,61 +61,51 @@ require_once __DIR__ . '/../layouts/navigation.php';
                     <div class="analysis-section__title">Price Information</div>
                     <div class="metric">
                         <span class="metric__label">Current Price:</span>
-                        <span class="metric__value"><?= formatPrice($stockData['price'] ?? null) ?></span>
+                        <span class="metric__value" id="currentPrice">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">Day's Change:</span>
-                        <span class="metric__value"><?= formatChange($stockData['change'] ?? null, $stockData['change_percent'] ?? null) ?></span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Day's Range:</span>
-                        <span class="metric__value">
-                            <?= formatPrice($stockData['day_low'] ?? null) ?> - <?= formatPrice($stockData['day_high'] ?? null) ?>
-                        </span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Previous Close:</span>
-                        <span class="metric__value"><?= formatPrice($stockData['previous_close'] ?? null) ?></span>
-                    </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <div class="analysis-section__title">Volume & Market Cap</div>
-                    <div class="metric">
-                        <span class="metric__label">Volume:</span>
-                        <span class="metric__value"><?= isset($stockData['volume']) ? number_format($stockData['volume']) : 'N/A' ?></span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Avg Volume:</span>
-                        <span class="metric__value"><?= isset($stockData['avg_volume']) ? number_format($stockData['avg_volume']) : 'N/A' ?></span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric__label">Market Cap:</span>
-                        <span class="metric__value"><?= isset($stockData['market_cap']) ? '$' . number_format($stockData['market_cap'] / 1000000000, 2) . 'B' : 'N/A' ?></span>
+                        <span class="metric__label">Currency:</span>
+                        <span class="metric__value" id="currency">Loading...</span>
                     </div>
                     <div class="metric">
                         <span class="metric__label">Exchange:</span>
-                        <span class="metric__value"><?= htmlspecialchars($stockData['exchange'] ?? 'N/A') ?></span>
+                        <span class="metric__value" id="exchange">Loading...</span>
                     </div>
                 </div>
                 
                 <div class="analysis-section">
-                    <div class="analysis-section__title">52-Week Range</div>
+                    <div class="analysis-section__title">Financial Metrics</div>
                     <div class="metric">
-                        <span class="metric__label">52-Week Low:</span>
-                        <span class="metric__value"><?= formatPrice($stockData['fifty_two_week_low'] ?? null) ?></span>
+                        <span class="metric__label">Market Cap:</span>
+                        <span class="metric__value" id="marketCap">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">52-Week High:</span>
-                        <span class="metric__value"><?= formatPrice($stockData['fifty_two_week_high'] ?? null) ?></span>
+                        <span class="metric__label">P/B Ratio:</span>
+                        <span class="metric__value" id="priceToBook">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">P/E Ratio:</span>
-                        <span class="metric__value"><?= isset($stockData['pe_ratio']) ? number_format($stockData['pe_ratio'], 2) : 'N/A' ?></span>
+                        <span class="metric__label">ROA:</span>
+                        <span class="metric__value" id="returnOnAssets">Loading...</span>
                     </div>
                     <div class="metric">
-                        <span class="metric__label">Dividend Yield:</span>
-                        <span class="metric__value"><?= isset($stockData['dividend_yield']) ? number_format($stockData['dividend_yield'], 2) . '%' : 'N/A' ?></span>
+                        <span class="metric__label">ROE:</span>
+                        <span class="metric__value" id="returnOnEquity">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="analysis-section">
+                    <div class="analysis-section__title">Company Information</div>
+                    <div class="metric">
+                        <span class="metric__label">Shares Outstanding:</span>
+                        <span class="metric__value" id="sharesOutstanding">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric__label">Total Revenue:</span>
+                        <span class="metric__value" id="totalRevenue">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric__label">Enterprise/EBITDA:</span>
+                        <span class="metric__value" id="enterpriseToEbitda">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -139,19 +113,19 @@ require_once __DIR__ . '/../layouts/navigation.php';
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const symbol = '<?= htmlspecialchars($symbol) ?>';
     const favoriteBtn = document.querySelector('.favorite-btn');
-    const periodSelect = document.getElementById('period');
-    const chartCanvas = document.getElementById('stockChart');
-    const chartLoading = document.getElementById('chartLoading');
-    const chartError = document.getElementById('chartError');
+    
+    // Load stock data
+    loadStockData(symbol);
     
     // Favorite button functionality
     if (favoriteBtn) {
         favoriteBtn.addEventListener('click', function() {
             const action = this.dataset.action;
-            const symbol = this.dataset.symbol;
             const csrf = this.dataset.csrf;
             
             const url = action === 'add' ? '/dashboard/add-favorite' : '/dashboard/remove-favorite';
@@ -188,90 +162,176 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Chart functionality
-    if (periodSelect && chartCanvas) {
-        periodSelect.addEventListener('change', function() {
-            loadChart(this.value);
-        });
-        
-        // Load initial chart
-        loadChart(periodSelect.value);
-    }
-    
-    function loadChart(period) {
-        chartLoading.classList.remove('hidden');
-        chartError.classList.add('hidden');
-        
-        const symbol = favoriteBtn.dataset.symbol;
-        
-        fetch(`/stock/historical?symbol=${encodeURIComponent(symbol)}&period=${encodeURIComponent(period)}`)
+    function loadStockData(symbol) {
+        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
             .then(response => response.json())
             .then(data => {
-                chartLoading.classList.add('hidden');
-                
-                if (data.success && data.data.length > 0) {
-                    renderChart(data.data);
+                if (data.info && data.history) {
+                    updateStockInfo(data.info, data.history); // Pass history as second parameter
+                    loadChart(data);
+                    document.getElementById('chartLoading').classList.add('hidden');
                 } else {
-                    chartError.classList.remove('hidden');
+                    throw new Error('Invalid data format');
                 }
             })
             .catch(error => {
-                console.error('Chart error:', error);
-                chartLoading.classList.add('hidden');
-                chartError.classList.remove('hidden');
-            });
+                console.error('Error loading stock data:', error);
+                document.getElementById('chartLoading').classList.add('hidden');
+                document.getElementById('chartError').classList.remove('hidden');
+            
+            // Update UI with error state
+            document.getElementById('stockName').textContent = 'Error loading data';
+            document.getElementById('stockPrice').textContent = 'N/A';
+            document.getElementById('stockChange').textContent = 'N/A';
+        });
+}
+    
+    function updateStockInfo(info, history) {
+        document.getElementById('stockName').textContent = info.name || 'N/A';
+        document.getElementById('stockPrice').textContent = info.currency ? 
+            `${info.currency} ${info.currentPrice?.toFixed(2) || 'N/A'}` : 'N/A';
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        
+        // Calculate price change from history
+        if (history && Object.keys(history).length > 1) {
+            const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
+            const prices = timestamps.map(t => history[t]);
+            
+            if (prices.length >= 2) {
+                const currentPrice = info.currentPrice || prices[prices.length - 1];
+                const previousPrice = prices[0]; // First price of the day
+                
+                const change = currentPrice - previousPrice;
+                const changePercent = ((change / previousPrice) * 100);
+                
+                const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+                const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
+                
+                document.getElementById('stockChange').innerHTML = 
+                    `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
+            } else {
+                document.getElementById('stockChange').textContent = 'N/A';
+            }
+        } else {
+            document.getElementById('stockChange').textContent = 'N/A';
+        }
+        
+        // Rest of the function remains the same...
+        document.getElementById('currentPrice').textContent = info.currency ? 
+            `${info.currency} ${info.currentPrice?.toFixed(2) || 'N/A'}` : 'N/A';
+        document.getElementById('currency').textContent = info.currency || 'N/A';
+        document.getElementById('exchange').textContent = info.exchange || 'N/A';
+        document.getElementById('marketCap').textContent = info.marketCap ? 
+            `${info.financialCurrency || '$'}${(info.marketCap / 1000000000).toFixed(2)}B` : 'N/A';
+        document.getElementById('priceToBook').textContent = info.priceToBook ? 
+            info.priceToBook.toFixed(2) : 'N/A';
+        document.getElementById('returnOnAssets').textContent = info.returnOnAssets ? 
+            (info.returnOnAssets * 100).toFixed(2) + '%' : 'N/A';
+        document.getElementById('returnOnEquity').textContent = info.returnOnEquity ? 
+            (info.returnOnEquity * 100).toFixed(2) + '%' : 'N/A';
+        document.getElementById('sharesOutstanding').textContent = info.sharesOutstanding ? 
+            (info.sharesOutstanding / 1000000).toFixed(0) + 'M' : 'N/A';
+        document.getElementById('totalRevenue').textContent = info.totalRevenue ? 
+            `${info.financialCurrency || '$'}${(info.totalRevenue / 1000000000).toFixed(2)}B` : 'N/A';
+        document.getElementById('enterpriseToEbitda').textContent = info.enterpriseToEbitda ? 
+            info.enterpriseToEbitda.toFixed(2) : 'N/A';
     }
     
-    function renderChart(data) {
-        const ctx = chartCanvas.getContext('2d');
-        ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-        
-        if (data.length === 0) return;
-        
-        const padding = 40;
-        const chartWidth = chartCanvas.width - 2 * padding;
-        const chartHeight = chartCanvas.height - 2 * padding;
-        
-        // Find min/max values
-        const prices = data.map(d => d.close);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceRange = maxPrice - minPrice;
-        
-        // Draw axes
-        ctx.strokeStyle = '#4A4A4A';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(padding, padding);
-        ctx.lineTo(padding, chartCanvas.height - padding);
-        ctx.lineTo(chartCanvas.width - padding, chartCanvas.height - padding);
-        ctx.stroke();
-        
-        // Draw price line
-        ctx.strokeStyle = '#0066CC';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        
-        data.forEach((point, index) => {
-            const x = padding + (index / (data.length - 1)) * chartWidth;
-            const y = padding + ((maxPrice - point.close) / priceRange) * chartHeight;
-            
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+function loadChart(data) {
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    
+    const timestamps = Object.keys(data.history);
+    const prices = Object.values(data.history);
+    
+    // Convert timestamps to DD/MM format with leading zeros
+    const labels = timestamps.map(timestamp => {
+        const date = new Date(parseInt(timestamp) * 1000);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `${day}/${month}`;
+    });
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: prices,
+                borderWidth: 2,
+                borderColor: '#4A90E2',
+                backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                fill: true,
+                tension: 0.1,
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#4A90E2',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: `Price (${data.info?.currency || 'USD'})`
+                    },
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        // Show all labels (daily) without limit
+                        maxTicksLimit: false,
+                        autoSkip: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                        display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4A90E2',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(context) {
+                            // Show full date in tooltip
+                            const timestamp = timestamps[context[0].dataIndex];
+                            const date = new Date(parseInt(timestamp) * 1000);
+                            return date.toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                        },
+                        label: function(context) {
+                            const price = context.parsed.y;
+                            const currency = data.info?.currency || 'USD';
+                            return `${currency} ${price.toFixed(2)}`;
+                        }
+                    }
+                }
             }
-        });
-        
-        ctx.stroke();
-        
-        // Draw labels
-        ctx.fillStyle = '#4A4A4A';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText('$' + maxPrice.toFixed(2), padding - 5, padding + 5);
-        ctx.fillText('$' + minPrice.toFixed(2), padding - 5, chartCanvas.height - padding + 5);
-    }
+        }
+    });
+}
 });
 </script>
 

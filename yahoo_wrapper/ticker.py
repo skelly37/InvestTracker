@@ -61,7 +61,7 @@ def get_info(ticker: Ticker) -> TickerInfo:
     )
 
 
-def get_history(ticker: Ticker, time_scale: TimeScale = TimeScale.Day) -> dict:
+def get_history(ticker: Ticker, time_scale: TimeScale = TimeScale.Month) -> dict:
     df = ticker.history(period=time_scale.period, interval=time_scale.interval)["Close"]
 
     return {int(timestamp.timestamp()): close for timestamp, close in df.items()}

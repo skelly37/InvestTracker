@@ -5,13 +5,6 @@ from flask import Flask, request
 from .search import *
 
 
-def demo():
-    first_item = find_items("AAPL")[0]
-    quote = Quote(first_item.symbol)
-
-    print(quote.info, "-----------", quote.history, sep="\n\n")
-
-
 def server():
     app = Flask(__name__)
 

@@ -171,35 +171,7 @@ class Stock {
             return null;
         }
     }
-    
-    public function getHistoricalData($symbol, $period = '1y') {
-        try {
-            $url = $this->apiUrl . "/historical/" . urlencode($symbol) . "/" . urlencode($period);
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 15,
-                    'method' => 'GET',
-                    'header' => 'User-Agent: InvestTracker/1.0'
-                ]
-            ]);
-            
-            $response = file_get_contents($url, false, $context);
-            if ($response === false) {
-                throw new Exception("Failed to fetch historical data");
-            }
-            
-            $data = json_decode($response, true);
-            if (!$data || isset($data['error'])) {
-                throw new Exception($data['error'] ?? "Invalid historical data response");
-            }
-            
-            return $data;
-        } catch (Exception $e) {
-            error_log("Historical data error for {$symbol}: " . $e->getMessage());
-            return null;
-        }
-    }
-    
+
     private function getCachedData($symbol) {
         try {
             $stmt = $this->db->prepare("
@@ -262,6 +234,34 @@ class Stock {
         } catch (PDOException $e) {
             error_log("Error clearing recent history: " . $e->getMessage());
             return false;
+        }
+    }
+
+    public function getQuoteFromAPI(string $symbol): ?array {
+        try {
+            $config = require __DIR__ . '/../config/app.php';
+            $apiUrl = $config['yahoo_api_url'];
+
+            $url = $apiUrl . '/quote?q=' . urlencode($symbol);
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $response) {
+                return json_decode($response, true);
+            }
+
+            return null;
+        } catch (Exception $e) {
+            error_log("API quote error: " . $e->getMessage());
+            return null;
         }
     }
 }

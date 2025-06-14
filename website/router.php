@@ -34,7 +34,6 @@ $routes = [
         '/settings' => ['DashboardController', 'settings'],
         '/search' => ['StockController', 'search'],
         '/stock' => ['StockController', 'detail'],
-        '/stock/historical' => ['StockController', 'getHistoricalData'],
         '/stock/quote' => ['StockController', 'quote'],
         '/stock/autocomplete' => ['StockController', 'autocomplete'],
         '/users' => ['UserController', 'index'],

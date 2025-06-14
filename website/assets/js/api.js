@@ -229,10 +229,6 @@ class InvestTrackerAPI {
         return this.get('/stock/quote', { symbol });
     }
     
-    async getHistoricalData(symbol, period = '1d') {
-        return this.get('/stock/historical', { symbol, period });
-    }
-    
     async addToFavorites(symbol) {
         return this.post('/dashboard/add-favorite', { symbol });
     }

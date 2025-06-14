@@ -61,14 +61,11 @@ class StockController extends BaseController {
             if (!in_array($period, $validPeriods)) {
                 $period = '1d';
             }
-            
-            $historicalData = $this->stock->getHistoricalData($symbol, $period);
-            
+
             $this->view('stock/detail', [
                 'title' => ($stockData['name'] ?? $symbol) . ' - InvestTracker',
                 'symbol' => $symbol,
                 'stockData' => $stockData,
-                'historicalData' => $historicalData,
                 'isInFavorites' => $isInFavorites,
                 'currentPeriod' => $period,
                 'validPeriods' => $validPeriods,
@@ -140,17 +137,18 @@ class StockController extends BaseController {
     public function quote(): void {
         $this->requireAuth();
         
-        $symbol = $_GET['symbol'] ?? '';
+        $symbol = $_GET['symbol'] ?? $_GET['q'] ?? '';
         
         if (empty($symbol)) {
             $this->json(['success' => false, 'message' => 'Symbol is required'], 400);
         }
         
         try {
-            $data = $this->stock->getQuote($symbol);
+            // Get data from Yahoo API wrapper
+            $data = $this->stock->getQuoteFromAPI($symbol);
             
             if ($data) {
-                $this->json(['success' => true, 'data' => $data]);
+                $this->json($data); // Return raw data from Yahoo API
             } else {
                 $this->json(['success' => false, 'message' => 'Stock not found'], 404);
             }
