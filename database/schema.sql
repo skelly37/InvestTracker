@@ -47,7 +47,9 @@ CREATE INDEX IF NOT EXISTS idx_recently_viewed_viewed_at ON recently_viewed(view
 CREATE INDEX IF NOT EXISTS idx_stock_cache_symbol ON stock_cache(symbol);
 CREATE INDEX IF NOT EXISTS idx_stock_cache_created_at ON stock_cache(created_at);
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (password: admin123) & abc user (password 123456)
 INSERT INTO users (username, password, role) 
-VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')
+VALUES
+    ('abc', '$2y$10$1jNzNAQJClJlxKjszhiQhOcofhiBVpWj4.beLT3pP6Rd1/YshLad.', 'user'),
+    ('admin', '$2y$10$b6.kgTIuCs8ucyiQG2DzGO8116sTQmUks2ST3dvJ5/jGmXJ7HZGda', 'admin')
 ON CONFLICT (username) DO NOTHING;
