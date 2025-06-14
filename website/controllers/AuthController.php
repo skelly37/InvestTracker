@@ -97,16 +97,24 @@ class AuthController extends BaseController {
             $this->redirect('/login', 'Passwords do not match.');
         }
         
-        // Create user using register method (with dummy email for now)
+        // Create user using register method
         $result = $this->user->register($input['username'], $input['password']);
         
-        if ($result) {
+        // Handle different registration results
+        if (is_numeric($result) && $result > 0) {
+            // Success - user created, $result is the new user ID
             $this->clearOldInput();
             $this->redirect('/login', 'Account created successfully. Please login.');
-        } else {
+        } elseif ($result === 'USER_EXISTS') {
+            // Username already exists
             Session::set('register_old_username', $input['username']);
             Session::set('register_error_username', 'Username already exists. Please choose a different one.');
-            $this->redirect('/login', 'Failed to create account. Username may already exist.');
+            $this->redirect('/login', 'Username already exists. Please choose a different one.');
+        } else {
+            // Database error or other failure
+            Session::set('register_old_username', $input['username']);
+            error_log("Registration failed for username: " . $input['username'] . ", result: " . var_export($result, true));
+            $this->redirect('/login', 'Registration failed due to a technical error. Please try again.');
         }
     }
     

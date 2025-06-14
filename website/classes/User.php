@@ -33,15 +33,21 @@ class User {
             $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
             $stmt->execute([$username]);
             if ($stmt->fetch()) {
-                return false;
+                // Username już istnieje - zwróć specjalny kod
+                return 'USER_EXISTS';
             }
             
             // Utwórz nowego użytkownika z domyślnym statusem aktywny
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $this->db->prepare("INSERT INTO users (username, password, role, active, created_at) VALUES (?, ?, ?, 1, NOW())");
+            $stmt = $this->db->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
             $result = $stmt->execute([$username, $hashedPassword, $role]);
             
-            return $result ? $this->db->lastInsertId() : false;
+            if ($result) {
+                return $this->db->lastInsertId();
+            } else {
+                error_log("Registration failed - INSERT query returned false for username: $username");
+                return false;
+            }
             
         } catch (PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
