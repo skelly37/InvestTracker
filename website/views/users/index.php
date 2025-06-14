@@ -97,7 +97,7 @@ require_once __DIR__ . '/../layouts/navigation.php';
 
 <div id="addUserModal" class="modal hidden">
     <div class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" style="background: #FFF8DC; border: 2px solid #4A4A4A; padding: 30px; border-radius: 8px; min-width: 450px; max-width: 600px; width: 90%;">
             <div class="modal-header">
                 <h3>Add New User</h3>
                 <button class="modal-close" onclick="closeAddUserModal()" type="button">×</button>
