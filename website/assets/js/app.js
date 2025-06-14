@@ -10,10 +10,7 @@
     function initializeApp() {
         // Initialize search autocomplete
         initSearchAutocomplete();
-        
-        // Initialize auto-refresh if enabled
-        initAutoRefresh();
-        
+
         // Initialize flash message auto-hide
         initFlashMessages();
         
@@ -124,46 +121,7 @@
             }
         }
     }
-    
-    function initAutoRefresh() {
-        const refreshInterval = localStorage.getItem('autoRefresh');
-        if (!refreshInterval || refreshInterval === '0') return;
-        
-        const intervalMs = parseInt(refreshInterval) * 1000;
-        
-        setInterval(() => {
-            // Only refresh if we're on a page that shows live data
-            const path = window.location.pathname;
-            if (path === '/dashboard' || path === '/favorites' || path.startsWith('/stock')) {
-                refreshPageData();
-            }
-        }, intervalMs);
-    }
-    
-    function refreshPageData() {
-        // This would refresh specific data without full page reload
-        // For now, we'll just indicate that data is being refreshed
-        const indicator = document.createElement('div');
-        indicator.textContent = 'Refreshing data...';
-        indicator.style.cssText = `
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #4A4A4A;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 1000;
-        `;
-        
-        document.body.appendChild(indicator);
-        
-        setTimeout(() => {
-            indicator.remove();
-        }, 2000);
-    }
-    
+
     function initFlashMessages() {
         const flashMessages = document.querySelectorAll('.alert');
         flashMessages.forEach(message => {
@@ -240,46 +198,4 @@
             }
         });
     }
-    
-    // Global utility functions
-    window.InvestTracker = {
-        formatPrice: function(price) {
-            return price ? parseFloat(price).toFixed(2) : 'N/A';
-        },
-        
-        formatChange: function(change, changePercent) {
-            if (change === null || changePercent === null) return 'N/A';
-            
-            const sign = change >= 0 ? '+' : '';
-            const className = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
-            
-            return `<span class="${className}">${sign}${parseFloat(change).toFixed(2)} (${sign}${parseFloat(changePercent).toFixed(2)}%)</span>`;
-        },
-        
-        showNotification: function(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert--${type}`;
-            notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 1000;
-                min-width: 250px;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Trigger animation
-            setTimeout(() => notification.style.opacity = '1', 10);
-            
-            // Auto-remove
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                setTimeout(() => notification.remove(), 300);
-            }, 5000);
-        }
-    };
 })();
