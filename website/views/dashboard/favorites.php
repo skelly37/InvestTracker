@@ -39,22 +39,18 @@ require_once __DIR__ . '/../layouts/navigation.php';
                         </thead>
                         <tbody>
                             <?php foreach ($favorites as $favorite): ?>
-                                <tr>
+                                <tr data-symbol="<?= htmlspecialchars($favorite['symbol']) ?>">
                                     <td>
                                         <a href="/stock?symbol=<?= urlencode($favorite['symbol']) ?>" class="stock__name">
                                             <?= htmlspecialchars($favorite['symbol']) ?>
                                         </a>
                                     </td>
-                                    <td><?= htmlspecialchars($favorite['data']['name'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($favorite['data']['type'] ?? 'Stock') ?></td>
-                                    <td><?= htmlspecialchars($favorite['data']['exchange'] ?? 'N/A') ?></td>
+                                    <td class="stock-name">Loading...</td>
+                                    <td class="stock-type">Stock</td>
+                                    <td class="stock-exchange">Loading...</td>
                                     <td>
-                                        <div class="stock__price">
-                                            <?= formatPrice($favorite['data']['price'] ?? null) ?>
-                                        </div>
-                                        <div class="stock__change">
-                                            <?= formatChange($favorite['data']['change'] ?? null, $favorite['data']['change_percent'] ?? null) ?>
-                                        </div>
+                                        <div class="stock__price stock-price">Loading...</div>
+                                        <div class="stock__change stock-change">Loading...</div>
                                     </td>
                                     <td>
                                         <button class="btn btn--danger btn--small remove-favorite-btn" 
@@ -84,7 +80,15 @@ require_once __DIR__ . '/../layouts/navigation.php';
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const removeButtons = document.querySelectorAll('.remove-favorite-btn');
+    const favoriteRows = document.querySelectorAll('tr[data-symbol]');
     
+    // Load current data for each favorite
+    favoriteRows.forEach(row => {
+        const symbol = row.dataset.symbol;
+        loadStockData(symbol, row);
+    });
+    
+    // Remove favorite functionality
     removeButtons.forEach(button => {
         button.addEventListener('click', function() {
             const symbol = this.dataset.symbol;
@@ -113,6 +117,68 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    function loadStockData(symbol, row) {
+        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.info) {
+                    updateRowData(row, data.info, data.history);
+                } else {
+                    updateRowError(row);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stock data for', symbol, ':', error);
+                updateRowError(row);
+            });
+    }
+    
+    function updateRowData(row, info, history) {
+        row.querySelector('.stock-name').textContent = info.name || 'N/A';
+        row.querySelector('.stock-exchange').textContent = info.exchange || 'N/A';
+        
+        const priceElement = row.querySelector('.stock-price');
+        const changeElement = row.querySelector('.stock-change');
+        
+        if (info.currentPrice) {
+            priceElement.textContent = `${info.currency || 'USD'} ${info.currentPrice.toFixed(2)}`;
+            
+            // Calculate change from history if available
+            if (history && Object.keys(history).length > 1) {
+                const timestamps = Object.keys(history).sort((a, b) => parseInt(a) - parseInt(b));
+                const prices = timestamps.map(t => history[t]);
+                
+                if (prices.length >= 2) {
+                    const currentPrice = info.currentPrice;
+                    const previousPrice = prices[0];
+                    
+                    const change = currentPrice - previousPrice;
+                    const changePercent = ((change / previousPrice) * 100);
+                    
+                    const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                    const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+                    const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
+                    
+                    changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
+                } else {
+                    changeElement.textContent = 'N/A';
+                }
+            } else {
+                changeElement.textContent = 'N/A';
+            }
+        } else {
+            priceElement.textContent = 'N/A';
+            changeElement.textContent = 'N/A';
+        }
+    }
+    
+    function updateRowError(row) {
+        row.querySelector('.stock-name').textContent = 'Error';
+        row.querySelector('.stock-exchange').textContent = 'N/A';
+        row.querySelector('.stock-price').textContent = 'N/A';
+        row.querySelector('.stock-change').textContent = 'N/A';
+    }
 });
 </script>
 
