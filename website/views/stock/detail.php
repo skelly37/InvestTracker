@@ -229,8 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Load data")
         
         Promise.all([
-            fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`).then(response => response.json()),
-            fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`).then(response => response.json())
+            // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
+            fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`).then(response => response.json()),
+            fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`).then(response => response.json())
         ])
         .then(([quoteData, historyData]) => {
             updateStockInfo(quoteData);
@@ -254,22 +255,21 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('currentSymbol:', currentSymbol);
             console.log('currentStockInfo:', currentStockInfo);
 
-
-
-        showChartLoading(true);
-        
-        fetch(`http://localhost:5000/history?q=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`)
-            .then(response => response.json())
-            .then(historyData => {
-                const currentInfo = { currency: document.getElementById('currency').textContent || 'USD' };
-                loadChart(historyData, currentInfo);
-                showChartLoading(false);
-            })
-            .catch(error => {
-                console.error('Error loading chart data:', error);
-                showChartLoading(false);
-                showChartError(true);
-            });
+    showChartLoading(true);
+    
+    // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
+    fetch(`/stock/history?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`)
+        .then(response => response.json())
+        .then(historyData => {
+            const currentInfo = { currency: document.getElementById('currency').textContent || 'USD' };
+            loadChart(historyData, currentInfo);
+            showChartLoading(false);
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+            showChartLoading(false);
+            showChartError(true);
+        });
     }
     
     function showChartLoading(show) {
@@ -347,11 +347,24 @@ document.addEventListener('DOMContentLoaded', function() {
         currentChart.destroy();
     }
     
-    const timestamps = Object.keys(historyData);
-    const prices = Object.values(historyData);
+    // POPRAWKA: Wyciągnij właściwe dane z odpowiedzi
+    let actualData = historyData;
+    if (historyData && historyData.success && historyData.data) {
+        actualData = historyData.data;
+    }
+    
+    const timestamps = Object.keys(actualData);
+    const prices = Object.values(actualData);
     
     console.log('Timestamps count:', timestamps.length);
     console.log('Prices count:', prices.length);
+    
+    // Check if we have valid data
+    if (timestamps.length === 0 || prices.length === 0) {
+        console.error('No valid chart data available');
+        showChartError(true);
+        return;
+    }
     
     // Format labels based on current interval
     const labels = timestamps.map(timestamp => {

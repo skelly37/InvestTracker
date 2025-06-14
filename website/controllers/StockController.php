@@ -132,11 +132,11 @@ class StockController extends BaseController {
         }
         
         try {
-            // Get data from Yahoo API wrapper
-            $data = $this->stock->getQuoteFromAPI($symbol);
+            // ZMIANA: Używamy cache'owanej metody getQuote() zamiast getQuoteFromAPI()
+            $data = $this->stock->getQuote($symbol);
             
             if ($data) {
-                $this->json($data); // Return raw data from Yahoo API
+                $this->json($data); // Return cached or fresh data
             } else {
                 $this->json(['success' => false, 'message' => 'Stock not found'], 404);
             }

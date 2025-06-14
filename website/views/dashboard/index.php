@@ -116,7 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
+                return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for recently viewed', symbol, ':', response.status);
                         return response.json();
@@ -159,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (popularStocks && popularStocks.length > 0) {
             const promises = popularStocks.map(symbol => {
-                // symbol is just a string, not an object
                 console.log('Loading popular stock:', symbol);
                 
                 if (!symbol || typeof symbol !== 'string') {
@@ -167,7 +167,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
+                return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for popular stock', symbol, ':', response.status);
                         return response.json();
@@ -210,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (indices && indices.length > 0) {
             const promises = indices.map(symbol => {
-                // symbol is just a string, not an object
                 console.log('Loading market index:', symbol);
                 
                 if (!symbol || typeof symbol !== 'string') {
@@ -218,7 +218,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return Promise.resolve(null);
                 }
                 
-                return fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+                // ZMIANA: Używamy naszego controllera zamiast bezpośredniego API
+                return fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
                     .then(response => {
                         console.log('Response for market index', symbol, ':', response.status);
                         return response.json();
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Quote data for market index', symbol, ':', quote);
                         return {
                             symbol: symbol,
-                            name: quote.name || 'N/A',
+                            name: quote.name || symbol,
                             currentPrice: quote.currentPrice || 0,
                             previousClose: quote.previousClose || 0,
                             currency: quote.currency || 'USD'
@@ -256,135 +257,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateRecentlyViewedSection(stocks) {
-        const container = document.querySelector('#recently-viewed-container');
-        if (!container) {
-            console.log('Recently viewed container not found');
-            return;
-        }
-        
-        container.innerHTML = '';
+        console.log('Updating recently viewed section with:', stocks);
         
         stocks.forEach(stock => {
-            const change = stock.currentPrice - stock.previousClose;
-            const changePercent = stock.previousClose ? ((change / stock.previousClose) * 100) : 0;
-            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
-            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-            
-            const stockElement = document.createElement('div');
-            stockElement.style.cssText = `
-                background: #FFF8DC;
-                border: 1px solid #4A4A4A;
-                padding: 15px;
-                margin-bottom: 15px;
-                text-align: center;
-            `;
-            
-            stockElement.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">
-                    <a href="/stock?symbol=${encodeURIComponent(stock.symbol)}" style="color: #4A4A4A; text-decoration: none;">${stock.symbol}</a>
-                </div>
-                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                    ${stock.currentPrice.toFixed(2)} ${stock.currency}
-                </div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-                    ${stock.name}
-                </div>
-                <div style="color: ${changeColor}; font-weight: bold;">
-                    ${changeText} (${changePercentText})
-                </div>
-            `;
-            
-            container.appendChild(stockElement);
+            const stockElement = document.querySelector(`#recently-viewed-container .stock-entry[data-symbol="${stock.symbol}"]`);
+            if (stockElement) {
+                updateStockElement(stockElement, stock);
+            }
         });
     }
     
     function updatePopularStocksSection(stocks) {
-        const container = document.querySelector('#popular-stocks-container');
-        if (!container) {
-            console.log('Popular stocks container not found');
-            return;
-        }
-        
-        container.innerHTML = '';
+        console.log('Updating popular stocks section with:', stocks);
         
         stocks.forEach(stock => {
-            const change = stock.currentPrice - stock.previousClose;
-            const changePercent = stock.previousClose ? ((change / stock.previousClose) * 100) : 0;
-            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
-            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-            
-            const stockElement = document.createElement('div');
-            stockElement.style.cssText = `
-                background: #FFF8DC;
-                border: 1px solid #4A4A4A;
-                padding: 15px;
-                margin-bottom: 15px;
-                text-align: center;
-            `;
-            
-            stockElement.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">
-                    <a href="/stock?symbol=${encodeURIComponent(stock.symbol)}" style="color: #4A4A4A; text-decoration: none;">${stock.symbol}</a>
-                </div>
-                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                    ${stock.currentPrice.toFixed(2)} ${stock.currency}
-                </div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-                    ${stock.name}
-                </div>
-                <div style="color: ${changeColor}; font-weight: bold;">
-                    ${changeText} (${changePercentText})
-                </div>
-            `;
-            
-            container.appendChild(stockElement);
+            const stockElement = document.querySelector(`#popular-stocks-container .stock-entry[data-symbol="${stock.symbol}"]`);
+            if (stockElement) {
+                updateStockElement(stockElement, stock);
+            }
         });
     }
     
-    function updateMarketIndicesSection(indices) {
-        const container = document.querySelector('#market-indices-container');
-        if (!container) {
-            console.log('Market indices container not found');
-            return;
-        }
+    function updateMarketIndicesSection(stocks) {
+        console.log('Updating market indices section with:', stocks);
         
-        container.innerHTML = '';
-        
-        indices.forEach(index => {
-            const change = index.currentPrice - index.previousClose;
-            const changePercent = index.previousClose ? ((change / index.previousClose) * 100) : 0;
-            const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
-            const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
-            const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
-            
-            const indexElement = document.createElement('div');
-            indexElement.style.cssText = `
-                background: #FFF8DC;
-                border: 1px solid #4A4A4A;
-                padding: 15px;
-                margin-bottom: 15px;
-                text-align: center;
-            `;
-            
-            indexElement.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">
-                    <a href="/stock?symbol=${encodeURIComponent(index.symbol)}" style="color: #4A4A4A; text-decoration: none;">${index.symbol}</a>
-                </div>
-                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                    ${index.currentPrice.toFixed(2)} ${index.currency}
-                </div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-                    ${index.name}
-                </div>
-                <div style="color: ${changeColor}; font-weight: bold;">
-                    ${changeText} (${changePercentText})
-                </div>
-            `;
-            
-            container.appendChild(indexElement);
+        stocks.forEach(stock => {
+            const stockElement = document.querySelector(`#market-indices-container .stock-entry[data-symbol="${stock.symbol}"]`);
+            if (stockElement) {
+                updateStockElement(stockElement, stock);
+            }
         });
+    }
+    
+    function updateStockElement(element, stock) {
+        const priceElement = element.querySelector('.stock-price');
+        const changeElement = element.querySelector('.stock-change');
+        
+        if (stock.currentPrice > 0) {
+            priceElement.textContent = `${stock.currency} ${stock.currentPrice.toFixed(2)}`;
+            
+            if (stock.previousClose > 0) {
+                const change = stock.currentPrice - stock.previousClose;
+                const changePercent = ((change / stock.previousClose) * 100);
+                
+                const changeText = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                const changePercentText = change >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+                const changeClass = change > 0 ? 'text--success' : (change < 0 ? 'text--danger' : 'text--neutral');
+                
+                changeElement.innerHTML = `<span class="${changeClass}">${changeText} (${changePercentText})</span>`;
+            } else {
+                changeElement.textContent = 'N/A';
+            }
+        } else {
+            priceElement.textContent = 'N/A';
+            changeElement.textContent = 'N/A';
+        }
     }
 });
 </script>

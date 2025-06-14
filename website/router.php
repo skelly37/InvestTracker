@@ -26,86 +26,61 @@ if ($requestUri !== '/' && substr($requestUri, -1) === '/') {
 
 // Define routes
 $routes = [
-    'GET' => [
-        '/' => ['AuthController', 'showLogin'],
-        '/login' => ['AuthController', 'showLogin'],
-        '/dashboard' => ['DashboardController', 'index'],
-        '/favorites' => ['DashboardController', 'favorites'],
-        '/settings' => ['DashboardController', 'settings'],
-        '/search' => ['StockController', 'search'],
-        '/stock' => ['StockController', 'detail'],
-        '/stock/quote' => ['StockController', 'quote'],
-        '/stock/autocomplete' => ['StockController', 'autocomplete'],
-        '/users' => ['UserController', 'index'],
-        '/logout' => ['AuthController', 'logout'],
-    ],
-    'POST' => [
-        '/login' => ['AuthController', 'login'],
-        '/register' => ['AuthController', 'register'],
-        '/auth/change-password' => ['AuthController', 'changePassword'],
-        '/auth/delete-account' => ['AuthController', 'deleteAccount'],
-        '/dashboard/add-favorite' => ['DashboardController', 'addFavorite'],
-        '/dashboard/remove-favorite' => ['DashboardController', 'removeFavorite'],
-        '/dashboard/update-preferences' => ['DashboardController', 'updatePreferences'],
-        '/users/create' => ['UserController', 'create'],
-        '/users/update-role' => ['UserController', 'updateRole'],
-        '/users/toggle-active' => ['UserController', 'toggleActive'],
-        '/users/delete' => ['UserController', 'delete'],
-        '/dashboard/clear-history' => ['DashboardController', 'clearRecentHistory'],
-    ]
+    '/' => ['HomeController', 'index'],
+    '/login' => ['AuthController', 'login'],
+    '/logout' => ['AuthController', 'logout'],
+    '/register' => ['AuthController', 'register'],
+    '/dashboard' => ['DashboardController', 'index'],
+    '/dashboard/favorites' => ['DashboardController', 'favorites'],
+    '/dashboard/add-favorite' => ['DashboardController', 'addFavorite'],
+    '/dashboard/remove-favorite' => ['DashboardController', 'removeFavorite'],
+    '/dashboard/settings' => ['DashboardController', 'settings'],
+    '/dashboard/update-preferences' => ['DashboardController', 'updatePreferences'],
+    '/dashboard/clear-recent-history' => ['DashboardController', 'clearRecentHistory'],
+    '/search' => ['StockController', 'search'],
+    '/stock' => ['StockController', 'detail'],
+    '/stock/quote' => ['StockController', 'quote'],
+    '/stock/history' => ['StockController', 'getHistoricalData'],
+    '/stock/autocomplete' => ['StockController', 'autocomplete'],
+    '/stock/historical' => ['StockController', 'getHistoricalData'],
+    '/admin' => ['AdminController', 'index'],
+    '/admin/users' => ['AdminController', 'users'],
+    '/admin/users/create' => ['AdminController', 'createUser'],
+    '/admin/users/edit' => ['AdminController', 'editUser'],
+    '/admin/users/update' => ['AdminController', 'updateUser'],
+    '/admin/users/delete' => ['AdminController', 'deleteUser'],
+    '/admin/users/toggle-status' => ['AdminController', 'toggleUserStatus'],
 ];
 
-// Handle routing
-try {
-    if (isset($routes[$requestMethod][$requestUri])) {
-        [$controllerName, $method] = $routes[$requestMethod][$requestUri];
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+if (isset($routes[$uri])) {
+    [$controllerName, $method] = $routes[$uri];
+    
+    $controllerFile = __DIR__ . "/controllers/{$controllerName}.php";
+    
+    if (file_exists($controllerFile)) {
+        require_once $controllerFile;
         
-        $controller = new $controllerName();
-        $controller->$method();
-    } else {
-        // 404 Not Found
-        http_response_code(404);
-        
-        if (Session::isLoggedIn()) {
-            require_once __DIR__ . '/views/layouts/header.php';
-            require_once __DIR__ . '/views/layouts/navigation.php';
+        if (class_exists($controllerName)) {
+            $controller = new $controllerName();
+            
+            if (method_exists($controller, $method)) {
+                $controller->$method();
+            } else {
+                header("HTTP/1.0 404 Not Found");
+                echo "Method not found";
+            }
         } else {
-            require_once __DIR__ . '/views/layouts/header.php';
+            header("HTTP/1.0 404 Not Found");
+            echo "Controller not found";
         }
-        
-        echo '<div class="container text-center mt-3">';
-        echo '<h1>404 - Page Not Found</h1>';
-        echo '<p>The requested page could not be found.</p>';
-        if (Session::isLoggedIn()) {
-            echo '<a href="/dashboard" class="btn btn--primary">Go to Dashboard</a>';
-        } else {
-            echo '<a href="/login" class="btn btn--primary">Go to Login</a>';
-        }
-        echo '</div>';
-        
-        require_once __DIR__ . '/views/layouts/footer.php';
-    }
-} catch (Exception $e) {
-    // 500 Internal Server Error
-    error_log("Router error: " . $e->getMessage());
-    http_response_code(500);
-    
-    if (Session::isLoggedIn()) {
-        require_once __DIR__ . '/views/layouts/header.php';
-        require_once __DIR__ . '/views/layouts/navigation.php';
     } else {
-        require_once __DIR__ . '/views/layouts/header.php';
+        header("HTTP/1.0 404 Not Found");
+        echo "Controller file not found";
     }
-    
-    echo '<div class="container text-center mt-3">';
-    echo '<h1>500 - Internal Server Error</h1>';
-    echo '<p>Something went wrong. Please try again later.</p>';
-    if (Session::isLoggedIn()) {
-        echo '<a href="/dashboard" class="btn btn--primary">Go to Dashboard</a>';
-    } else {
-        echo '<a href="/login" class="btn btn--primary">Go to Login</a>';
-    }
-    echo '</div>';
-    
-    require_once __DIR__ . '/views/layouts/footer.php';
+} else {
+    header("HTTP/1.0 404 Not Found");
+    echo "Page not found";
 }
+?>

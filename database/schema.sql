@@ -1,7 +1,3 @@
--- Create database (run this separately if needed)
--- CREATE DATABASE invest_tracker;
-
--- Users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -13,7 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
     chart_time_interval VARCHAR(10) DEFAULT '1mo'
 );
 
--- User favorites table
 CREATE TABLE IF NOT EXISTS user_favorites (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -22,7 +17,6 @@ CREATE TABLE IF NOT EXISTS user_favorites (
     UNIQUE(user_id, symbol)
 );
 
--- Recently viewed stocks table
 CREATE TABLE IF NOT EXISTS recently_viewed (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -31,21 +25,42 @@ CREATE TABLE IF NOT EXISTS recently_viewed (
     UNIQUE(user_id, symbol)
 );
 
--- Stock data cache table
 CREATE TABLE IF NOT EXISTS stock_cache (
-    id SERIAL PRIMARY KEY,
-    symbol VARCHAR(20) UNIQUE NOT NULL,
-    data JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+     id SERIAL PRIMARY KEY,
+     uri VARCHAR(255) UNIQUE NOT NULL,
+     data JSONB NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for better performance
+
 CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_favorites_symbol ON user_favorites(symbol);
 CREATE INDEX IF NOT EXISTS idx_recently_viewed_user_id ON recently_viewed(user_id);
 CREATE INDEX IF NOT EXISTS idx_recently_viewed_viewed_at ON recently_viewed(viewed_at);
-CREATE INDEX IF NOT EXISTS idx_stock_cache_symbol ON stock_cache(symbol);
+CREATE INDEX IF NOT EXISTS idx_stock_cache_uri ON stock_cache(uri);
 CREATE INDEX IF NOT EXISTS idx_stock_cache_created_at ON stock_cache(created_at);
+
+
+CREATE OR REPLACE FUNCTION clean_old_cache_entries()
+RETURNS void AS $$
+BEGIN
+    DELETE FROM stock_cache
+    WHERE created_at < NOW() - INTERVAL '5 minutes';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION trigger_clean_old_cache()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM clean_old_cache_entries();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trigger_cache_cleanup
+    AFTER INSERT ON stock_cache
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION trigger_clean_old_cache();
 
 -- Insert default admin user (password: admin123) & abc user (password 123456)
 INSERT INTO users (username, password, role) 

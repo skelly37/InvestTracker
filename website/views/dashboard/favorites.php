@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function loadStockData(symbol, row) {
-        fetch(`http://localhost:5000/quote?q=${encodeURIComponent(symbol)}`)
+        // ZMIANA: Używamy нашего controllera zamiast прямого API
+        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`)
             .then(response => response.json())
             .then(data => {
                 updateRowData(row, data);

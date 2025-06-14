@@ -117,8 +117,17 @@ class Stock {
     }
     
     public function searchStocks($query) {
+        // First check cache
+        $cacheUri = "/search?q=" . urlencode($query);
+        $cachedData = $this->getCachedData($cacheUri);
+        
+        if ($cachedData !== null) {
+            error_log("Cache HIT for search: $query");
+            return $cachedData;
+        }
+        
         try {
-            $url = $this->apiUrl . "/search?q=" . urlencode($query);
+            $url = $this->apiUrl . $cacheUri;
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 10,
@@ -137,7 +146,12 @@ class Stock {
                 throw new Exception("Invalid search response");
             }
             
-            return $data['results'];
+            // Cache the results
+            $results = $data['results'];
+            $this->cacheData($cacheUri, $results);
+            error_log("Cache MISS for search: $query - data cached");
+            
+            return $results;
         } catch (Exception $e) {
             error_log("Search error for '{$query}': " . $e->getMessage());
             return [];
@@ -145,8 +159,17 @@ class Stock {
     }
 
     public function getQuote($symbol) {
+        // First check cache
+        $cacheUri = "/quote?q=" . urlencode($symbol);
+        $cachedData = $this->getCachedData($cacheUri);
+        
+        if ($cachedData !== null) {
+            error_log("Cache HIT for quote: $symbol");
+            return $cachedData;
+        }
+        
         try {
-            $url = $this->apiUrl . "/quote?q=" . urlencode($symbol);
+            $url = $this->apiUrl . $cacheUri;
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 10,
@@ -165,6 +188,8 @@ class Stock {
                 throw new Exception("Invalid API response");
             }
             
+            $this->cacheData($cacheUri, $data);
+            
             return $data;
         } catch (Exception $e) {
             error_log("Get quote error for {$symbol}: " . $e->getMessage());
@@ -172,14 +197,56 @@ class Stock {
         }
     }
 
-    private function getCachedData($symbol) {
+    public function getHistoricalData($symbol, $interval) {
+        // First check cache
+        $cacheUri = "/history?q=" . urlencode($symbol) . "&interval=" . urlencode($interval);
+        $cachedData = $this->getCachedData($cacheUri);
+        
+        if ($cachedData !== null) {
+            error_log("Cache HIT for history: $symbol, interval: $interval");
+            return $cachedData;
+        }
+        
+        try {
+            $url = $this->apiUrl . $cacheUri;
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 10,
+                    'method' => 'GET',
+                    'header' => 'User-Agent: InvestTracker/1.0'
+                ]
+            ]);
+            
+            $response = file_get_contents($url, false, $context);
+            if ($response === false) {
+                throw new Exception("Failed to fetch history from API");
+            }
+            
+            $data = json_decode($response, true);
+            if (!$data) {
+                throw new Exception("Invalid API response");
+            }
+            
+            $this->cacheData($cacheUri, $data);
+            error_log("Cache MISS for history: $symbol, interval: $interval - data cached");
+            
+            return $data;
+        } catch (Exception $e) {
+            error_log("Get history error for {$symbol}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function getCachedData($uri) {
         try {
             $stmt = $this->db->prepare("
                 SELECT data 
                 FROM stock_cache 
-                WHERE symbol = ? AND created_at > NOW() - INTERVAL '5 minutes'
+                WHERE uri = ? AND created_at > NOW() - INTERVAL '5 minutes'
+                ORDER BY created_at DESC 
+                LIMIT 1
             ");
-            $stmt->execute([$symbol]);
+            $stmt->execute([$uri]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result) {
@@ -193,16 +260,17 @@ class Stock {
         }
     }
     
-    private function cacheData($symbol, $data) {
+    private function cacheData($uri, $data) {
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO stock_cache (symbol, data, created_at) 
+                INSERT INTO stock_cache (uri, data, created_at)
                 VALUES (?, ?, NOW())
-                ON CONFLICT (symbol) DO UPDATE SET 
+                ON CONFLICT (uri) DO UPDATE SET
                     data = EXCLUDED.data,
                     created_at = EXCLUDED.created_at
             ");
-            $stmt->execute([$symbol, json_encode($data)]);
+            $stmt->execute([$uri, json_encode($data)]);
+            error_log("Data cached for uri: $uri");
         } catch (Exception $e) {
             error_log("Cache write error: " . $e->getMessage());
         }
@@ -234,34 +302,6 @@ class Stock {
         } catch (PDOException $e) {
             error_log("Error clearing recent history: " . $e->getMessage());
             return false;
-        }
-    }
-
-    public function getQuoteFromAPI(string $symbol): ?array {
-        try {
-            $config = require __DIR__ . '/../config/app.php';
-            $apiUrl = $config['yahoo_api_url'];
-
-            $url = $apiUrl . '/quote?q=' . urlencode($symbol);
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode === 200 && $response) {
-                return json_decode($response, true);
-            }
-
-            return null;
-        } catch (Exception $e) {
-            error_log("API quote error: " . $e->getMessage());
-            return null;
         }
     }
 }
